@@ -43,6 +43,12 @@ button { font: inherit; color: inherit; }
 .review-keys dt { color: #fff; font-weight: 500; }
 .review-keys dd { margin: 0; color: #9b8fab; }
 .review-note { margin: 10px 8px 0; color: #9b8fab; }
+.review-option { margin: 4px 0 6px; padding: 12px 10px; border-radius: 8px; background: #221a2c; border: 1px solid #3a2d48; }
+.review-option > label:first-child { display: block; font: 600 12px Outfit, sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #ffb3d4; margin-bottom: 6px; }
+.review-option select { width: 100%; padding: 7px 8px; border-radius: 6px; background: #15101d; color: #fff; border: 1px solid #4a3a5c; font: 500 13px Rubik, sans-serif; cursor: pointer; }
+.review-option .review-note { margin: 8px 0 0; line-height: 1.4; color: #c9bdd8; }
+.review-check { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; color: #e6def0; font-size: 12px; line-height: 1.35; cursor: pointer; }
+.review-check input { margin: 1px 0 0; accent-color: #f63a90; }
 .review-toggle, .review-show {
   border: 1px solid #2a2135; background: #1d1626; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 16px; line-height: 1;
 }
@@ -329,3 +335,99 @@ body.panel-hidden .viewport { left: 0; }
 .dialog-back { position: absolute; inset: 0; z-index: 8; background: rgba(12,8,18,.72); display: grid; place-items: center; animation: scr-in .2s; }
 .dialog { width: 900px; padding: 56px; border-radius: 36px; background: #251b33; border: 2px solid rgba(255,255,255,.12); box-shadow: 0 30px 80px rgba(0,0,0,.5); }
 .dialog p { margin: 20px 0 48px; }
+
+/* ================= Memories (made by TeaTime from the family's photos) ================= */
+.crumb { position: absolute; left: 318px; top: 78px; z-index: 3; font: 500 32px/40px Outfit, sans-serif; color: rgba(255,255,255,.7); }
+.crumb::before { content: "›"; margin-right: 14px; color: rgba(255,255,255,.45); }
+.row h2 .row-hint { margin-left: 16px; font: 400 24px/32px Rubik, sans-serif; color: rgba(255,255,255,.55); }
+.who { flex-wrap: wrap; row-gap: 10px; }
+.kicker { padding: 6px 16px; border-radius: 999px; background: var(--glass); border: 2px solid var(--glass-edge); font: 500 24px/28px Rubik, sans-serif; }
+.kind { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 999px; font: 500 22px/25px Rubik, sans-serif; color: #fff; background: linear-gradient(90deg, var(--pink-deep), var(--pink)); white-space: nowrap; }
+.kind.big { font-size: 24px; line-height: 28px; padding: 6px 18px; }
+.kind-channel, .kind-door { background: var(--dark-glass); border: 2px solid rgba(255,255,255,.3); backdrop-filter: blur(20px); }
+.kind .live { width: 12px; height: 12px; border-radius: 50%; background: #ff4d5e; box-shadow: 0 0 0 4px rgba(255,77,94,.25); animation: live 1.6s ease-in-out infinite; }
+@keyframes live { 50% { opacity: .35; } }
+.pill-new.static { position: static; }
+.pill-count { position: absolute; right: 15px; top: 15px; padding: 6px 16px; border-radius: 999px; background: var(--dark-glass); border: 2px solid rgba(255,255,255,.3); backdrop-filter: blur(20px); font: 500 22px/25px Rubik, sans-serif; }
+.card.is-focus .pill-count { right: 10px; top: 10px; }
+
+/* Memory card: wide, so it reads as "made for you", not a moment someone sent */
+.mcard {
+  position: relative; flex: none; width: 560px; height: 315px; border-radius: 28px; overflow: hidden;
+  border: 0 solid #fff; background: #2a2035 center/cover no-repeat;
+  transition: width .2s var(--ease), height .2s var(--ease), box-shadow .2s, border-width .2s;
+}
+.mcard.is-focus { width: 600px; height: 338px; border-width: 5px; transform: none; box-shadow: var(--glow); }
+.mcard .scrim { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.25), rgba(0,0,0,0) 30%, rgba(0,0,0,0) 45%, rgba(0,0,0,.8)); }
+.mcard .mtags { position: absolute; left: 20px; top: 20px; display: flex; gap: 10px; }
+.mcard .badge-video { right: 20px; top: 20px; }
+.mcard .cap { position: absolute; left: 26px; right: 26px; bottom: 22px; text-shadow: 0 1px 8px rgba(0,0,0,.4); }
+.mcard .cap b { display: block; font: 500 34px/40px Outfit, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mcard .cap span { display: block; margin-top: 4px; font: 400 24px/28px Rubik, sans-serif; color: rgba(255,255,255,.85); }
+.mcard.door { background: #241a30; }
+.mcard .collage { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 4px; }
+.mcard .collage i { background: center/cover; }
+.mcard.door .scrim { background: linear-gradient(rgba(26,18,38,.3), rgba(26,18,38,.85)); }
+
+/* Person card: a face, like the People album on a phone */
+.pcard { flex: none; width: 240px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.pcard .face { width: 220px; height: 220px; border-radius: 50%; background-repeat: no-repeat; transition: transform .2s var(--ease), box-shadow .2s; }
+.pcard.is-focus { transform: none; box-shadow: none; }
+.pcard.is-focus .face { transform: scale(1.06); box-shadow: 0 0 0 5px #fff, var(--glow); }
+.pcard b { margin-top: 18px; font: 500 30px/34px Outfit, sans-serif; }
+.pcard span { margin-top: 2px; font: 400 24px/26px Rubik, sans-serif; color: rgba(255,255,255,.75); }
+.face.sm { display: inline-block; width: 72px; height: 72px; border-radius: 50%; background-repeat: no-repeat; flex: none; }
+.v-from .face.sm { width: 96px; height: 96px; }
+.v-from .stack img { width: 72px; height: 72px; margin-right: -18px; border: 3px solid rgba(0,0,0,.4); }
+.v-from .stack { margin-right: 18px; }
+
+/* Photo card (inside the opened 100-photo moment) */
+.phcard { flex: none; width: 352px; height: 198px; border-radius: 20px; background: #2a2035 center/cover; border: 0 solid #fff; transition: width .2s var(--ease), height .2s var(--ease), box-shadow .2s, border-width .2s; }
+.phcard.is-focus { width: 380px; height: 214px; border-width: 5px; transform: none; box-shadow: var(--glow); }
+
+/* Buttons that live in the hero (D's featured memory, the moment's Play all) */
+.hero-btns { position: absolute; left: 80px; top: 506px; z-index: 3; display: flex; gap: 16px; transition: opacity .25s; }
+.hero-btns .btn img { margin-left: -4px; }
+.hero-btns.is-away { opacity: 0; pointer-events: none; }
+.home-hero.with-btns { top: 236px; }
+.hero-layer.kb { animation: hero-kb 3.4s linear both; }
+@keyframes hero-kb { from { transform: scale(1.02); } to { transform: scale(1.08); } }
+
+/* ----- Memory player ----- */
+.player { background: #000; }
+.player #plPhotos { position: absolute; inset: 0; overflow: hidden; }
+.pl-photo { position: absolute; inset: 0; background: center/cover no-repeat; }
+.pl-photo.is-portrait { background-position: center 28%; }
+.kb-a { animation: kb-a 4.2s linear both; }
+.kb-b { animation: kb-b 4.2s linear both; }
+.pl-photo.kb-a.fade-in { animation: pl-fade .9s ease both, kb-a 4.2s linear both; }
+.pl-photo.kb-b.fade-in { animation: pl-fade .9s ease both, kb-b 4.2s linear both; }
+@keyframes pl-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes kb-a { from { transform: scale(1.03) translate(0, 0); } to { transform: scale(1.15) translate(-2%, -1.5%); } }
+@keyframes kb-b { from { transform: scale(1.15) translate(2%, 1%); } to { transform: scale(1.03) translate(0, 0); } }
+.pl-title-dim { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(26,18,38,.55), rgba(26,18,38,.85)); }
+.pl-title { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; animation: scr-in .8s var(--ease) both; }
+.pl-title .kind { font-size: 26px; line-height: 30px; padding: 8px 22px; }
+.pl-title h1 { margin: 28px 0 0; font: 700 96px/106px Outfit, sans-serif; }
+.pl-title p { margin: 20px 0 0; font: 400 36px/44px Rubik, sans-serif; color: rgba(255,255,255,.85); white-space: pre; }
+.story-chip { position: absolute; left: 96px; top: 52px; display: flex; align-items: center; gap: 16px; padding: 8px 24px 8px 10px; border-radius: 999px; background: var(--dark-glass); border: 2px solid rgba(255,255,255,.3); backdrop-filter: blur(20px); font: 400 28px/32px Rubik, sans-serif; transition: opacity .4s; }
+.segs { position: absolute; left: 96px; top: 126px; display: flex; gap: 8px; transition: opacity .4s; }
+.segs i { position: relative; width: 120px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.3); overflow: hidden; }
+.segs i.done { background: #fff; }
+.segs i b { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; }
+.player .v-info { top: 800px; }
+.player.is-quiet .v-info, .player.is-quiet .v-scrim-t { opacity: 0; }
+.player.is-quiet .v-info { transform: translateY(20px); }
+.player.is-quiet .v-scrim-b { opacity: .35; }
+.player.is-quiet .story-chip, .player.is-quiet .segs { opacity: .75; }
+.ch-strip { position: absolute; left: 0; right: 0; top: 190px; display: flex; justify-content: center; align-items: center; gap: 72px; opacity: 0; transition: opacity .35s; pointer-events: none; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+.ch-strip.is-on { opacity: 1; }
+.ch-strip .cur { font: 600 52px/60px Outfit, sans-serif; padding: 10px 36px; border-radius: 999px; background: var(--dark-glass); border: 3px solid #fff; box-shadow: var(--glow); }
+.ch-strip .prev, .ch-strip .next { font: 500 32px/40px Outfit, sans-serif; color: rgba(255,255,255,.75); }
+.upnext { position: absolute; right: 96px; top: 230px; width: 700px; padding: 32px 36px 40px; border-radius: 32px; background: rgba(20,14,28,.72); border: 2px solid rgba(255,255,255,.14); backdrop-filter: blur(20px); animation: scr-in .5s var(--ease) both; overflow: hidden; }
+.upnext p { margin: 0; }
+.upnext .un-row { display: flex; gap: 24px; align-items: center; margin: 18px 0 22px; }
+.upnext .un-thumb { width: 220px; height: 124px; border-radius: 18px; background: center/cover; flex: none; }
+.upnext b { display: block; margin-top: 12px; font: 600 40px/46px Outfit, sans-serif; }
+.upnext span:not(.kind) { display: block; margin-top: 4px; font: 400 26px/30px Rubik, sans-serif; color: rgba(255,255,255,.8); }
+.upnext .drain { position: absolute; left: 36px; right: 36px; bottom: 18px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--pink-deep), var(--pink)); transform-origin: left; animation: drain 5s linear forwards; }

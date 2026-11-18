@@ -2,13 +2,18 @@
 (function () {
   "use strict";
 
-  /* ---------------- Data ---------------- */
+  /* ================= Data ================= */
   const A = (f) => "assets/" + f;
+  // People. `face` = [photo, x%, y%, zoom%]: a face cut from a family photo, like a phone's People album.
   const PEOPLE = {
-    sarah: { name: "Sarah", avatar: A("avatar-sarah.jpg") },
-    ed: { name: "Ed", avatar: A("avatar-ed.jpg") },
+    sarah: { name: "Sarah", avatar: A("avatar-sarah.jpg"), face: ["xmas-baking.jpg", 27, 14, 420] },
+    ed: { name: "Ed", avatar: A("avatar-ed.jpg"), face: ["xmas-beach.jpg", 19, 25, 380] },
     may: { name: "May", avatar: A("avatar-may.jpg") },
-    tom: { name: "Tom", avatar: A("avatar-tom.jpg") },
+    tom: { name: "Tom", avatar: A("avatar-tom.jpg"), face: ["photo-tom-grad.jpg", 52, 31, 520] },
+    lily: { name: "Lily", face: ["xmas-nan-hug.jpg", 60, 36, 560] },
+    leo: { name: "Leo", face: ["xmas-presents.jpg", 33, 19, 430] },
+    mia: { name: "Mia", face: ["photo-drawing.jpg", 50, 26, 520] },
+    lisa: { name: "Lisa", you: true, avatar: A("avatar-lisa.png"), face: ["xmas-nan-hug.jpg", 40, 31, 470] },
     linh: { name: "Linh", avatar: A("avatar-linh.jpg") },
     nam: { name: "Nam", avatar: A("avatar-may.jpg") },
     mai: { name: "Mai", avatar: A("avatar-sarah.jpg") },
@@ -23,14 +28,60 @@
   const TV = { name: "Lisa’s TV", owner: A("avatar-lisa.png"), since: "March 2026" };
   const PIN_OK = "482917";
 
-  // Each moment: who, date, caption, items (photo/video, orientation). `isNew` = not watched yet.
+  // The family's photo library: when each was taken (photo date), where, and who is in it (named on the phones).
+  const PH = {
+    "autumn-dog": { src: "photo-autumn-dog.jpg", date: "10 May 2026", m: "2026-05", place: "Daylesford", people: ["leo", "mia"] },
+    "kids-path": { src: "photo-kids-path.jpg", date: "11 May 2026", m: "2026-05", place: "Daylesford", people: ["leo"] },
+    "newborn": { src: "photo-sarah-3.jpg", o: "p", date: "18 Jun 2026", m: "2026-06", people: ["sarah"] },
+    "sofa-dog": { src: "photo-sofa-dog.jpg", date: "21 Jun 2026", m: "2026-06", people: ["mia", "leo"] },
+    "beach": { src: "photo-beach.jpg", date: "14 Jul 2026", m: "2026-07", place: "Torquay", people: ["ed", "sarah", "mia"] },
+    "drawing": { src: "photo-drawing.jpg", o: "p", date: "9 Sep 2026", m: "2026-09", people: ["mia"] },
+    "dinner": { src: "photo-ed-1.jpg", date: "4 Oct 2026", m: "2026-10", people: ["ed", "sarah", "tom"] },
+    "birthday": { src: "photo-birthday.jpg", date: "25 Oct 2026", m: "2026-10", people: ["lily", "leo"] },
+    "tom-grad": { src: "photo-tom-grad.jpg", o: "p", date: "17 Nov 2026", m: "2026-11", people: ["tom"] },
+    "xmas-tree": { src: "xmas-tree.jpg", date: "20 Dec 2025", m: "2025-12", people: ["sarah", "leo", "lily"] },
+    "xmas-baking": { src: "xmas-baking.jpg", date: "22 Dec 2025", m: "2025-12", people: ["sarah", "lily"] },
+    "xmas-star": { src: "xmas-star.jpg", o: "p", date: "24 Dec 2025", m: "2025-12", people: ["ed", "lily"] },
+    "xmas-presents": { src: "xmas-presents.jpg", date: "25 Dec 2025", m: "2025-12", people: ["leo", "lily"] },
+    "xmas-dinner": { src: "xmas-dinner.jpg", date: "25 Dec 2025", m: "2025-12", people: ["lisa", "leo", "lily", "ed"] },
+    "xmas-nan-hug": { src: "xmas-nan-hug.jpg", o: "p", date: "25 Dec 2025", m: "2025-12", people: ["lisa", "lily"] },
+    "xmas-beach": { src: "xmas-beach.jpg", date: "26 Dec 2025", m: "2025-12", place: "Torquay", people: ["ed", "sarah", "leo", "lily"] },
+  };
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const monthLabel = (m) => MONTHS[+m.slice(5) - 1] + " " + m.slice(0, 4);
+  const phSrc = (id) => A(PH[id].src);
+
+  // Memories: made by TeaTime from ALL the family's photos (not per upload). ai = needs face/scene AI (People, Events); the rest is photo metadata (date, GPS).
+  const MEM = {
+    "ev-lily": { kind: "event", label: "Party", ai: true, title: "Lily’s 6th birthday", when: "25 Oct 2026", photos: ["birthday", "sofa-dog", "drawing"], from: ["sarah", "ed"], isNew: true },
+    "ev-xmas": { kind: "event", label: "Party", ai: true, title: "Christmas 2025", when: "December 2025", photos: ["xmas-tree", "xmas-baking", "xmas-star", "xmas-presents", "xmas-dinner", "xmas-nan-hug", "xmas-beach"], from: ["sarah", "ed"] },
+    "ev-out": { kind: "event", label: "Outdoors", ai: true, title: "Out and about", when: "Dec 2025 – Jul 2026", photos: ["autumn-dog", "kids-path", "beach", "xmas-beach"], from: ["sarah", "ed"] },
+    "ev-tom": { kind: "event", label: "Event", ai: true, title: "Tom’s prize day", when: "17 Nov 2026", photos: ["tom-grad", "dinner"], from: ["tom", "ed"], isNew: true, hidden: true },
+    "pl-daylesford": { kind: "place", label: "Place", title: "A weekend in Daylesford", when: "May 2026", photos: ["autumn-dog", "kids-path"], from: ["sarah"], isNew: true },
+    "pl-torquay": { kind: "place", label: "Place", title: "Torquay", when: "Dec 2025 and Jul 2026", photos: ["xmas-beach", "beach"], from: ["ed", "sarah"] },
+    "tl-six": { kind: "timeline", label: "Timeline", title: "Six months with the Johnsons", when: "May – Oct 2026", photos: ["autumn-dog", "kids-path", "newborn", "sofa-dog", "beach", "drawing", "dinner", "birthday"], from: ["sarah"], isNew: true, chapters: true },
+    "tl-oct": { kind: "timeline", label: "Month", title: "October 2026", when: "October 2026", photos: ["dinner", "birthday"], from: ["ed", "sarah"] },
+    "tl-xmas": { kind: "timeline", label: "A year ago", title: "This time last year", when: "December 2025", photos: ["xmas-tree", "xmas-baking", "xmas-presents", "xmas-beach"], from: ["sarah", "ed"] },
+  };
+  // One person memory for everyone named on the phones who is in 2+ photos.
+  ["lily", "leo", "mia", "sarah", "ed", "tom", "lisa"].forEach((p) => {
+    const photos = Object.keys(PH).filter((id) => PH[id].people.includes(p));
+    if (photos.length < 2) return;
+    const ms = photos.map((id) => PH[id].m).sort(), short = (m) => MONTHS[+m.slice(5) - 1].slice(0, 3) + " " + m.slice(0, 4);
+    MEM["p-" + p] = { kind: "person", label: "Person", ai: true, person: p, title: PEOPLE[p].you ? "You, Lisa" : PEOPLE[p].name, when: ms[0] === ms[ms.length - 1] ? short(ms[0]) : short(ms[0]) + " – " + short(ms[ms.length - 1]), photos, from: [] };
+  });
+  const memOrder = { person: 0, event: 1, place: 2, timeline: 3 };
+
+  // Moments = what someone sent (unchanged by memories). The bulk upload is one moment with 100 photos.
   const P = (src, o) => ({ type: "photo", src: A(src), o: o || "l" });
   const MOMENTS = {
-    "m-may": { by: "may", date: "12 Oct 2026", caption: "We always enjoy regular visits from Leckie — the kids love the lake!", isNew: true,
+    "m-bulk": { by: "sarah", date: "Yesterday", caption: "Six months of us, in one go.", isNew: true, bulk: true, range: "May – Oct 2026",
+      memories: ["tl-six", "pl-daylesford", "ev-lily", "ev-out"], items: [] },
+    "m-may": { by: "may", date: "12 Oct 2026", caption: "We always enjoy regular visits from Leckie — the kids love the lake!",
       items: [P("photo-kids-path.jpg"), P("photo-autumn-dog.jpg"), P("photo-sarah-3.jpg", "p"), P("photo-beach.jpg"), P("photo-ed-1.jpg")] },
     "m-ed-video": { by: "ed", date: "11 Oct 2026", caption: "Sunday lunch at ours — Lisa, you were missed! Here’s the toast.",
       items: [{ type: "video", src: A("photo-sofa-dog.jpg"), o: "l", dur: 70 }], thumb: A("photo-beach.jpg") },
-    "m-cake": { by: "sarah", date: "11 Oct 2026", caption: "Six candles, one big breath — happy birthday, Leo!", items: [P("photo-birthday.jpg")] },
+    "m-cake": { by: "sarah", date: "25 Oct 2026", caption: "Six candles, one big breath — happy birthday, Lily!", items: [P("photo-birthday.jpg")] },
     "m-autumn": { by: "tom", date: "10 Oct 2026", caption: "Biscuit’s first proper walk in the leaves.", items: [P("photo-autumn-dog.jpg")] },
     "m-drawing": { by: "sarah", date: "9 Oct 2026", caption: "Mia drew our whole family for you, Grandma — that’s you in the middle!", items: [P("photo-drawing.jpg", "p")] },
     "m-dinner": { by: "ed", date: "4 Oct 2026", caption: "Everyone round the table for Dad’s birthday.", items: [P("photo-ed-1.jpg")] },
@@ -38,44 +89,49 @@
     "m-newborn": { by: "sarah", date: "18 Sep 2026", caption: "Quiet morning with the little one.", items: [P("photo-sarah-3.jpg", "p")] },
     "m-tom-new": { by: "tom", date: "Today", caption: "Got the science prize at school today!", items: [P("photo-tom-grad.jpg", "p")], isNew: true, hidden: true },
   };
+  // Sarah's 100 photos, May – Oct 2026 (placeholder photos repeat). Grouped by month for the opened view.
+  const BULK_MONTHS = [["2026-10", 18], ["2026-09", 21], ["2026-08", 17], ["2026-07", 16], ["2026-06", 14], ["2026-05", 14]];
+  (function () {
+    const pool = ["beach", "autumn-dog", "dinner", "sofa-dog", "birthday", "kids-path", "drawing", "newborn"];
+    let k = 0;
+    BULK_MONTHS.forEach(([m, n]) => {
+      for (let i = 0; i < n; i++) {
+        const ph = PH[pool[k++ % pool.length]];
+        const day = Math.max(1, 28 - Math.floor((i * 27) / n));
+        MOMENTS["m-bulk"].items.push({ type: "photo", src: A(ph.src), o: ph.o || "l", date: day + " " + MONTHS[+m.slice(5) - 1].slice(0, 3) + " " + m.slice(0, 4), m, idx: MOMENTS["m-bulk"].items.length });
+      }
+    });
+  })();
   const FAMILY_OF = () => "The Johnsons";
   const thumbOf = (m) => m.thumb || m.items[0].src;
-  const countLabel = (m) => {
-    if (m.items[0].type === "video") return "Video";
-    return m.items.length === 1 ? "1 photo" : m.items.length + " photos";
-  };
+  const countLabel = (m) => (m.items[0].type === "video" ? "Video" : m.items.length === 1 ? "1 photo" : m.items.length + " photos");
 
-  function buildRows() {
-    const visible = Object.keys(MOMENTS).filter((id) => !MOMENTS[id].hidden);
-    const recent = ["m-tom-new", "m-may", "m-ed-video", "m-cake", "m-autumn", "m-drawing", "m-dinner", "m-may-sofa", "m-newborn"].filter((id) => visible.includes(id));
-    const byPerson = (p) => recent.filter((id) => MOMENTS[id].by === p);
-    return [
-      { title: "Recent from everyone", ids: recent },
-      { title: "Sarah’s moments", ids: byPerson("sarah") },
-      { title: "Ed’s moments", ids: byPerson("ed") },
-      { title: "May’s moments", ids: byPerson("may") },
-      { title: "Tom’s moments", ids: byPerson("tom") },
-    ].filter((r) => r.ids.length);
-  }
-
-  /* ---------------- Storage (per-viewer convenience only) ---------------- */
+  /* ================= Storage + design options ================= */
   const store = {
     get(k, d) { try { const v = localStorage.getItem("teatime.tv." + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem("teatime.tv." + k, JSON.stringify(v)); } catch (e) {} },
   };
+  const CONCEPTS = { A: "Rails on Home", B: "Memories space", C: "Memory channels", D: "Featured + one rail" };
+  const q = new URLSearchParams(location.search);
+  let concept = /^[ABCD]$/.test(q.get("concept") || "") ? q.get("concept") : store.get("concept", "D");
+  let launch = q.has("launch") ? q.get("launch") === "1" : store.get("launch", false); // launch = no AI yet: no People, no Events
+  const visibleMem = (id) => MEM[id] && !MEM[id].hidden && (!launch || !MEM[id].ai);
+  const memIds = (kind) => Object.keys(MEM).filter((id) => visibleMem(id) && (!kind || MEM[id].kind === kind));
+  const newestMems = () => memIds().sort((a, b) => (MEM[b].madeAt || 0) - (MEM[a].madeAt || 0) || (MEM[b].isNew ? 1 : 0) - (MEM[a].isNew ? 1 : 0));
 
-  /* ---------------- Helpers ---------------- */
+  /* ================= Helpers ================= */
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const stage = $("#stage");
   const pad = (n) => String(n).padStart(2, "0");
   const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const clock12 = (d) => (d.getHours() % 12 || 12) + ":" + pad(d.getMinutes());
   const timeLabel = (d) => clock12(d) + " " + (d.getHours() < 12 ? "am" : "pm");
   const dateLabel = (d) => DAYS[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()];
   const mmss = (s) => Math.floor(s / 60) + ":" + pad(Math.floor(s % 60));
   const DOT = "  ·  ";
+  const names = (ids) => { const n = ids.map((p) => PEOPLE[p].name); return n.length < 2 ? n.join("") : n.slice(0, -1).join(", ") + " and " + n[n.length - 1]; };
+  const faceStyle = (p) => { const f = PEOPLE[p].face; return f ? "background-image:url(" + A(f[0]) + ");background-size:" + f[3] + "%;background-position:" + f[1] + "% " + f[2] + "%" : "background-image:url(" + PEOPLE[p].avatar + ");background-size:cover"; };
 
   const glows = '<div class="glow-purple"></div><div class="glow-coral"></div>';
   const brand = '<div class="brand"><img src="' + A("logo-emblem.svg") + '" alt=""><span>TeaTime</span></div>';
@@ -84,9 +140,10 @@
   const topbar = (withChip, focusableChip) => '<div class="topbar">' + brand + (withChip ? chip(focusableChip) : "") + "</div>";
   const topbarCompact = '<div class="topbar compact">' + brand + "</div>";
   const chev = '<img src="' + A("icon-chevron-left.svg") + '" alt="">';
+  const playIc = '<img src="' + A("icon-play.svg") + '" alt="" style="width:26px;height:26px">';
   const steps = (list) => '<div class="steps">' + list.map((t, i) => '<div class="step"><b>' + (i + 1) + "</b>" + t + "</div>").join("") + "</div>";
 
-  /* ---------------- Focus engine (spatial D-pad navigation) ---------------- */
+  /* ================= Focus engine (spatial, for simple screens) ================= */
   let focused = null;
   function setFocus(el) {
     if (!el || el === focused) return;
@@ -95,7 +152,7 @@
     el.classList.add("is-focus");
     if (screen && screen.onFocus) screen.onFocus(el);
   }
-  function focusables() { return $$("[data-f]", stage).filter((el) => el.offsetParent !== null && !el.closest("[hidden]")); }
+  function focusables() { return $$("[data-f]", stage).filter((el) => el.offsetParent !== null); }
   function moveFocus(dir) {
     const scope = $(".dialog-back", stage) || stage;
     const list = $$("[data-f]", scope).filter((el) => el !== focused && el.offsetParent !== null);
@@ -105,8 +162,7 @@
     let best = null, bestScore = Infinity;
     for (const el of list) {
       const b = el.getBoundingClientRect();
-      const x = b.left + b.width / 2, y = b.top + b.height / 2;
-      const dx = x - cx, dy = y - cy;
+      const dx = b.left + b.width / 2 - cx, dy = b.top + b.height / 2 - cy;
       let main, cross;
       if (dir === "left") { if (b.right > r.left + 2) continue; main = -dx; cross = Math.abs(dy); }
       else if (dir === "right") { if (b.left < r.right - 2) continue; main = dx; cross = Math.abs(dy); }
@@ -116,7 +172,6 @@
       if (score < bestScore) { bestScore = score; best = el; }
     }
     if (best) setFocus(best);
-    return !!best;
   }
   function press(el) {
     if (!el) return;
@@ -125,7 +180,7 @@
     if (screen && screen.act) screen.act(el.dataset.act, el);
   }
 
-  /* ---------------- Toasts ---------------- */
+  /* ================= Toasts ================= */
   let toastTimer = null;
   function clearToast(animate) {
     clearTimeout(toastTimer);
@@ -142,7 +197,7 @@
     toastTimer = setTimeout(() => clearToast(true), ms || 3000);
   }
 
-  /* ---------------- Screens ---------------- */
+  /* ================= Setup screens ================= */
   const S = {};
   let screen = null;
   let paired = store.get("paired", false);
@@ -151,7 +206,7 @@
     html: () => '<div class="scr">' + glows + '<div class="splash-brand"><img src="' + A("logo-emblem.svg") + '" alt=""><div><div class="name">TeaTime</div><div class="tag">Your family is waiting</div></div></div></div>',
     mount() { this.t = setTimeout(() => go(paired ? "home" : "welcome", true), 2200); },
     unmount() { clearTimeout(this.t); },
-    key: () => true, // the splash ignores the remote
+    key: () => true,
   };
 
   S.welcome = {
@@ -165,7 +220,7 @@
       '<p class="t-body muted" style="font-size:36px;line-height:44px;margin:28px 0 0">Photos and videos from the people you love, playing here by themselves. Set it up once from the TeaTime app on a phone — nothing to type on the TV.</p></div>' +
       '<div><span class="btn primary" data-f data-act="start" id="first">Get started</span></div></div></div>',
     act(a) { if (a === "start") go("pair"); },
-    key(k) { return k === "back"; }, // first screen: Back has nowhere to go
+    key(k) { return k === "back"; },
   };
 
   const codeHtml = (code, cls) => '<div class="code ' + (cls || "") + '">' + code.split("").map((d) => '<div class="digit">' + d + "</div>").join("") + "</div>";
@@ -180,18 +235,17 @@
         '<div class="wash-bottom"></div>' + topbarCompact +
         '<div class="setup-copy" style="width:1076px;gap:126px"><div style="display:flex;flex-direction:column;gap:64px">' +
         '<div style="display:flex;flex-direction:column;gap:32px"><div class="t-headline">Enter this code in the TeaTime app on your phone</div>' +
-        '<div id="code">' + codeHtml(this.code) + '</div>' +
+        '<div id="code">' + codeHtml(this.code) + "</div>" +
         '<div class="t-small muted-2 sep">The code belongs to this TV only' + DOT + 'It refreshes every <span id="mins">10 minutes</span></div></div>' +
         steps(["Open TeaTime on the phone", "Tap  Set up the TV", "Type the code  →  this TV joins the family"]) +
         '</div><div><span class="btn" data-f data-act="other" id="first">' + chev + "Other ways to connect</span></div></div></div>";
     },
     mount() {
-      // The code refreshes every 10 minutes; the new one slides in where the old one was.
       this.left = 600;
       this.t = setInterval(() => {
         this.left -= 1;
-        const m = $("#mins", stage);
-        if (m) m.textContent = Math.ceil(this.left / 60) + (Math.ceil(this.left / 60) === 1 ? " minute" : " minutes");
+        const m = $("#mins", stage), mins = Math.ceil(this.left / 60);
+        if (m) m.textContent = mins + (mins === 1 ? " minute" : " minutes");
         if (this.left <= 0) { this.left = 600; this.code = newCode(); $("#code", stage).innerHTML = codeHtml(this.code, "refresh"); }
       }, 1000);
     },
@@ -281,109 +335,305 @@
     key(k) { if (k === "back") { go("pair"); return true; } },
   };
 
-  /* ----- Home: immersive list ----- */
-  const home = { rows: [], row: 0, cols: [], offsets: [], onChip: false };
-  function cardHtml(id, ri, ci) {
-    const m = MOMENTS[id];
-    const video = m.items[0].type === "video";
-    return '<div class="card" data-f data-act="open" data-r="' + ri + '" data-c="' + ci + '" data-id="' + id + '" style="background-image:url(' + thumbOf(m) + ')">' +
-      '<div class="scrim"></div>' + (m.isNew ? '<div class="pill-new">New</div>' : "") +
-      (video ? '<div class="badge-video"><img src="' + A("icon-play.svg") + '" alt=""></div>' : "") +
-      '<div class="cap"><b>' + PEOPLE[m.by].name + "</b><span>" + m.date + "</span></div></div>";
-  }
-  S.home = {
-    html() {
-      home.rows = buildRows();
-      if (home.cols.length !== home.rows.length) { home.cols = home.rows.map(() => 0); home.offsets = home.rows.map(() => 0); }
-      home.row = Math.min(home.row, home.rows.length - 1);
-      return '<div class="scr home"><div class="hero-layer" id="heroA"></div><div class="hero-layer" id="heroB" style="opacity:0"></div>' +
-        '<div class="fade-left"></div><div class="fade-bottom"></div><div class="fade-top"></div>' + topbar(true, true) +
-        '<div class="home-hero"><div class="hero-copy" id="heroCopy"></div><div class="dots" id="heroDots"></div></div>' +
-        '<div class="rows" id="rows">' + home.rows.map((r, ri) =>
-          '<section class="row" data-row="' + ri + '"><h2>' + r.title + '</h2><div class="tiles">' + r.ids.map((id, ci) => cardHtml(id, ri, ci)).join("") + "</div></section>").join("") +
-        "</div></div>";
-    },
-    mount() {
-      this.heroFront = "heroA";
-      this.lastHero = null;
-      const card = this.cardAt(home.row, home.cols[home.row]) || this.cardAt(0, 0);
-      setFocus(home.onChip ? $("#chip", stage) : card);
-      this.hero(card.dataset.id);
-      this.layout(true);
-    },
-    cardAt(r, c) { return $('.card[data-r="' + r + '"][data-c="' + c + '"]', stage); },
-    onFocus(el) {
-      home.onChip = el.id === "chip";
-      if (el.classList.contains("card")) {
-        home.row = +el.dataset.r; home.cols[home.row] = +el.dataset.c;
-        this.layout(); this.hero(el.dataset.id);
-      }
-    },
-    layout(instant) {
-      // Vertical: the focused row sits right under the hero; rows above fade out underneath it.
-      const rows = $$(".row", stage);
-      let y = 0;
-      rows.forEach((r, i) => { r.classList.toggle("is-past", i < home.row); if (i < home.row) y += r.offsetHeight + 44; });
-      const rowsEl = $("#rows", stage);
-      if (instant) rowsEl.style.transition = "none";
-      rowsEl.style.transform = "translateY(" + -y + "px)";
-      // Horizontal: scroll a row only when the focused card would leave the safe area (80…1840).
-      rows.forEach((r, i) => {
-        const tiles = $(".tiles", r), c = home.cols[i];
-        const left = c * (330 + 24), w = i === home.row && !home.onChip ? 356 : 330;
-        let off = home.offsets[i];
-        if (left - off < 0) off = left;
-        if (left + w - off > 1760) off = left + w - 1760;
-        home.offsets[i] = off;
-        if (instant) tiles.style.transition = "none";
-        tiles.style.transform = "translateX(" + -off + "px)";
-      });
-      if (instant) requestAnimationFrame(() => { rowsEl.style.transition = ""; $$(".tiles", stage).forEach((t) => (t.style.transition = "")); });
-    },
-    hero(id) {
-      if (id === this.lastHero) return;
-      this.lastHero = id;
-      const m = MOMENTS[id], who = PEOPLE[m.by];
-      const back = this.heroFront === "heroA" ? "heroB" : "heroA";
-      const b = $("#" + back, stage), f = $("#" + this.heroFront, stage);
-      b.style.backgroundImage = "url(" + (m.items[0].type === "video" ? thumbOf(m) : m.items[0].src) + ")";
-      b.classList.toggle("is-portrait", m.items[0].o === "p");
-      b.style.opacity = 1; f.style.opacity = 0; this.heroFront = back;
-      const copy = $("#heroCopy", stage);
-      const fill = () => {
-        copy.innerHTML = '<div class="who"><img src="' + who.avatar + '" alt=""><span class="t-title">' + who.name + "</span></div>" +
-          '<div class="hero-meta t-body sep">' + FAMILY_OF() + DOT + countLabel(m) + DOT + m.date + "</div>" +
-          '<div class="hero-quote">“' + m.caption + "”</div>";
-        copy.classList.remove("is-swapping");
-      };
-      if (copy.innerHTML) { copy.classList.add("is-swapping"); clearTimeout(this.swapT); this.swapT = setTimeout(fill, 160); } else fill();
-      const n = Math.min(5, m.items.length), dots = $("#heroDots", stage);
-      dots.style.visibility = n > 1 ? "visible" : "hidden";
-      dots.innerHTML = Array.from({ length: n }, (_, i) => "<i" + (i === 0 ? ' class="on"' : "") + "></i>").join("");
-    },
-    act(a, el) {
-      if (a === "thistv") return go("thistv");
-      if (a === "open") openViewer(home.rows[+el.dataset.r].ids, +el.dataset.c, { row: +el.dataset.r });
-    },
-    key(k) {
-      if (toastState.countdown && ["up", "down", "left", "right"].includes(k)) cancelArrival();
-      if (k === "back") { if ($(".toast", stage)) { cancelArrival(); return true; } return true; } // Home is the root: Back stays
-      if (k === "ok" && toastState.countdown) { playArrival(); return true; }
-      if (home.onChip) { if (k === "down") { setFocus(this.cardAt(home.row, home.cols[home.row])); return true; } if (k === "up" || k === "left" || k === "right") return true; return; }
-      const r = home.row, c = home.cols[r];
-      if (k === "left" || k === "right") { const n = c + (k === "left" ? -1 : 1); const el = this.cardAt(r, n); if (el) setFocus(el); return true; }
-      if (k === "up") { if (r === 0) { setFocus($("#chip", stage)); this.layout(); } else setFocus(this.cardAt(r - 1, home.cols[r - 1])); return true; }
-      if (k === "down") { if (r < home.rows.length - 1) setFocus(this.cardAt(r + 1, home.cols[r + 1])); return true; }
-    },
-  };
+  /* ================= Rails (immersive list) — shared by Home, Memories and the opened 100-photo moment ================= */
+  // Card sizes [w, h, focused w, focused h]
+  const SIZE = { moment: [330, 440, 356, 475], memory: [560, 315, 600, 338], door: [560, 315, 600, 338], channel: [560, 315, 600, 338], person: [240, 300, 240, 300], photo: [352, 198, 380, 214] };
+  const LSTATE = {};
+  const lstate = (key) => (LSTATE[key] = LSTATE[key] || { row: 0, cols: {}, offs: {}, onChip: false, focusId: null });
 
-  /* ----- New moment arriving (toast on Home only) ----- */
+  const kindChip = (m) => '<span class="kind kind-' + m.kind + '">' + m.label + "</span>";
+  function cardHtml(it, r, c) {
+    const at = ' data-f data-act="open" data-r="' + r + '" data-c="' + c + '" data-key="' + it.key + '"';
+    if (it.t === "moment") {
+      const m = MOMENTS[it.id], video = m.items[0].type === "video";
+      return '<div class="card"' + at + ' style="background-image:url(' + thumbOf(m) + ')"><div class="scrim"></div>' +
+        (m.isNew ? '<div class="pill-new">New</div>' : "") + (m.bulk ? '<div class="pill-count">' + m.items.length + " photos</div>" : "") +
+        (video ? '<div class="badge-video"><img src="' + A("icon-play.svg") + '" alt=""></div>' : "") +
+        '<div class="cap"><b>' + PEOPLE[m.by].name + "</b><span>" + (m.bulk ? m.range : m.date) + "</span></div></div>";
+    }
+    if (it.t === "memory" || it.t === "channel") {
+      const m = MEM[it.id], ch = it.t === "channel";
+      return '<div class="mcard' + (ch ? " is-channel" : "") + '"' + at + ' style="background-image:url(' + phSrc(m.photos[0]) + ')"><div class="scrim"></div>' +
+        '<div class="mtags">' + (ch ? '<span class="kind kind-channel"><i class="live"></i>Channel</span>' : kindChip(m)) + (m.isNew && !ch ? '<span class="pill-new static">New</span>' : "") + "</div>" +
+        '<div class="badge-video"><img src="' + A("icon-play.svg") + '" alt=""></div>' +
+        '<div class="cap"><b>' + m.title + "</b><span>" + (ch ? "Plays non-stop" : m.when + " · " + m.photos.length + " photos") + "</span></div></div>";
+    }
+    if (it.t === "channelAll") {
+      return '<div class="mcard is-channel"' + at + ' style="background-image:url(' + phSrc("xmas-beach") + ')"><div class="scrim"></div>' +
+        '<div class="mtags"><span class="kind kind-channel"><i class="live"></i>Channel</span></div><div class="badge-video"><img src="' + A("icon-play.svg") + '" alt=""></div>' +
+        '<div class="cap"><b>Everything, newest first</b><span>Plays non-stop</span></div></div>';
+    }
+    if (it.t === "person") {
+      const m = MEM[it.id];
+      return '<div class="pcard"' + at + '><div class="face" style="' + faceStyle(m.person) + '"></div><b>' + m.title + "</b><span>" + m.photos.length + " photos</span></div>";
+    }
+    if (it.t === "door") {
+      const ids = newestMems(), n = ids.filter((id) => MEM[id].isNew).length;
+      return '<div class="mcard door"' + at + '><div class="collage">' + ids.slice(0, 4).map((id) => '<i style="background-image:url(' + phSrc(MEM[id].photos[0]) + ')"></i>').join("") + '</div><div class="scrim"></div>' +
+        '<div class="mtags"><span class="kind kind-door">Memories</span>' + (n ? '<span class="pill-new static">' + n + " new</span>" : "") + "</div>" +
+        '<div class="cap"><b>' + (it.label || "All memories") + "</b><span>" + ids.length + " memories · people, events, places</span></div></div>";
+    }
+    if (it.t === "photo") {
+      const ph = MOMENTS["m-bulk"].items[it.idx];
+      return '<div class="phcard"' + at + ' style="background-image:url(' + ph.src + ')"></div>';
+    }
+    return "";
+  }
+
+  // What the hero (top-left copy + full background) shows for the focused item.
+  function heroFor(it) {
+    if (it.t === "moment") {
+      const m = MOMENTS[it.id], who = PEOPLE[m.by];
+      return { bg: [m.items[0].type === "video" ? thumbOf(m) : m.items[0].src], portrait: m.items[0].o === "p",
+        who: '<img src="' + who.avatar + '" alt=""><span class="t-title">' + who.name + "</span>",
+        meta: FAMILY_OF() + DOT + (m.bulk ? m.items.length + " photos" + DOT + m.range : countLabel(m) + DOT + m.date), quote: "“" + m.caption + "”", dots: Math.min(5, m.items.length) };
+    }
+    if (it.t === "memory" || it.t === "channel" || it.t === "featured") {
+      const m = MEM[it.id];
+      const desc = it.t === "channel" ? "Plays by itself, one memory after another. Left and right change channel." :
+        m.kind === "person" ? "Every photo with " + (PEOPLE[m.person].you ? "you" : PEOPLE[m.person].name) + ", from everyone in the family." :
+        "Made by TeaTime from photos " + names(m.from) + " sent.";
+      return { bg: m.photos.map(phSrc), portrait: PH[m.photos[0]].o === "p", preview: true,
+        who: (it.t === "featured" ? '<span class="kicker">' + (m.isNew ? "New memory" : "A memory for you") + "</span>" : "") + (it.t === "channel" ? '<span class="kind kind-channel big"><i class="live"></i>Channel</span>' : '<span class="kind kind-' + m.kind + ' big">' + m.label + "</span>") + '<span class="t-title">' + m.title + "</span>",
+        meta: m.when + DOT + m.photos.length + " photos" + (m.from.length ? DOT + "from " + names(m.from) : ""), quote: desc };
+    }
+    if (it.t === "channelAll") return { bg: Object.keys(PH).reverse().map(phSrc), preview: true, who: '<span class="kind kind-channel big"><i class="live"></i>Channel</span><span class="t-title">Everything, newest first</span>', meta: "Every photo the family has sent", quote: "Plays by itself. Left and right change channel." };
+    if (it.t === "person") {
+      const m = MEM[it.id], p = PEOPLE[m.person];
+      return { bg: m.photos.map(phSrc), preview: true, who: '<span class="face sm" style="' + faceStyle(m.person) + '"></span><span class="t-title">' + m.title + "</span>",
+        meta: m.photos.length + " photos" + DOT + "named by the family on their phones", quote: "Every photo with " + (p.you ? "you" : p.name) + ", from everyone in the family." };
+    }
+    if (it.t === "door") {
+      const ids = newestMems();
+      return { bg: ids.slice(0, 5).map((id) => phSrc(MEM[id].photos[0])), preview: true, who: '<span class="t-title">' + (it.label || "All memories") + "</span>",
+        meta: ids.length + " memories" + DOT + ids.filter((id) => MEM[id].isNew).length + " new", quote: launch ? "Places and months, made by TeaTime from your family’s photos." : "People, events, places and months — made by TeaTime from your family’s photos." };
+    }
+    if (it.t === "photo" || it.t === "bulkhead") {
+      const m = MOMENTS["m-bulk"], ph = m.items[it.idx || 0];
+      return { bg: [ph.src], portrait: ph.o === "p", who: '<img src="' + PEOPLE.sarah.avatar + '" alt=""><span class="t-title">Sarah</span>',
+        meta: m.items.length + " photos" + DOT + m.range + DOT + "newest month first", quote: it.t === "photo" ? "Photo " + (it.idx + 1) + " of " + m.items.length + DOT + ph.date : "“" + m.caption + "”" };
+    }
+    return { bg: [], who: "", meta: "", quote: "" };
+  }
+
+  // A rail screen. cfg.rows() → [{title, type, items}] ; a row with type "buttons" lives in the hero (D's featured memory, the moment's Play all).
+  function railScreen(key, cfg) {
+    return {
+      sname: key,
+      html(arg) {
+        this.arg = arg;
+        this.rows = cfg.rows(arg).filter((r) => r.items.length);
+        const st = lstate(key);
+        const hasBtns = this.rows[0] && this.rows[0].type === "buttons";
+        this.base = hasBtns ? 650 : 562;
+        let rowsHtml = "", btnHtml = "";
+        this.rows.forEach((r, ri) => {
+          if (r.type === "buttons") { btnHtml = '<div class="hero-btns" id="heroBtns">' + r.items.map((it, ci) => '<span class="btn' + (ci === 0 ? " primary" : "") + '" data-f data-act="open" data-r="' + ri + '" data-c="' + ci + '" data-key="' + it.key + '">' + (ci === 0 ? playIc : "") + it.label + "</span>").join("") + "</div>"; return; }
+          const t = r.items[0].t, sz = SIZE[t === "channelAll" ? "channel" : t] || SIZE.moment;
+          rowsHtml += '<section class="row row-' + t + '" data-row="' + ri + '"><h2>' + r.title + (r.hint ? '<span class="row-hint">' + r.hint + "</span>" : "") + '</h2><div class="tiles" style="height:' + sz[3] + 'px">' + r.items.map((it, ci) => cardHtml(it, ri, ci)).join("") + "</div></section>";
+        });
+        if (st.row >= this.rows.length) st.row = 0;
+        return '<div class="scr home rails"><div class="hero-layer" id="heroA"></div><div class="hero-layer" id="heroB" style="opacity:0"></div>' +
+          '<div class="fade-left"></div><div class="fade-bottom"></div><div class="fade-top"></div>' + topbar(true, !!cfg.chip) +
+          (cfg.crumb ? '<div class="crumb">' + cfg.crumb + "</div>" : "") +
+          '<div class="home-hero' + (hasBtns ? " with-btns" : "") + '"><div class="hero-copy" id="heroCopy"></div><div class="dots" id="heroDots"></div></div>' + btnHtml +
+          '<div class="rows" id="rows" style="top:' + this.base + 'px">' + rowsHtml + "</div></div>";
+      },
+      mount() {
+        const st = lstate(key);
+        this.heroFront = "heroA"; this.lastHero = null;
+        if (st.focusId) { // come back to the card that was playing: same row if it's there, otherwise the first row that has it
+          let hit = null;
+          this.rows.forEach((r, ri) => r.items.forEach((it, ci) => { if (it.key === st.focusId && (!hit || (ri === st.row && hit[0] !== st.row))) hit = [ri, ci]; }));
+          if (hit) { st.row = hit[0]; st.cols[hit[0]] = hit[1]; st.onChip = false; }
+          st.focusId = null;
+        }
+        const el = this.el(st.row, st.cols[st.row] || 0) || this.el(0, 0);
+        setFocus(st.onChip && cfg.chip ? $("#chip", stage) : el);
+        if (st.onChip) this.hero(this.item(st.row, st.cols[st.row] || 0));
+        this.layout(true);
+      },
+      unmount() { clearInterval(this.pv); clearTimeout(this.pvT); },
+      item(r, c) { return this.rows[r] && this.rows[r].items[c]; },
+      el(r, c) { return $('[data-r="' + r + '"][data-c="' + c + '"]', stage); },
+      onFocus(el) {
+        const st = lstate(key);
+        st.onChip = el.id === "chip";
+        if (el.dataset.r != null) { st.row = +el.dataset.r; st.cols[st.row] = +el.dataset.c; this.layout(); this.hero(this.rows[st.row].type === "buttons" ? cfg.featured(this.arg) : this.item(st.row, st.cols[st.row])); }
+      },
+      layout(instant) {
+        const st = lstate(key);
+        const rowsEl = $("#rows", stage), btns = $("#heroBtns", stage);
+        const onBtns = this.rows[st.row] && this.rows[st.row].type === "buttons" && !st.onChip;
+        if (btns) btns.classList.toggle("is-away", !onBtns && !st.onChip);
+        let y = 0;
+        $$(".row", stage).forEach((r) => {
+          const ri = +r.dataset.row;
+          r.classList.toggle("is-past", ri < st.row);
+          if (ri === st.row) y = this.base - 562 + r.offsetTop;
+        });
+        if (instant) rowsEl.style.transition = "none";
+        rowsEl.style.transform = "translateY(" + (onBtns || st.onChip ? 0 : -y) + "px)";
+        $$(".row", stage).forEach((r) => {
+          const ri = +r.dataset.row, items = this.rows[ri].items, t = items[0].t, sz = SIZE[t === "channelAll" ? "channel" : t] || SIZE.moment;
+          const c = st.cols[ri] || 0, left = c * (sz[0] + 24), w = ri === st.row && !st.onChip ? sz[2] : sz[0];
+          let off = st.offs[ri] || 0;
+          if (left - off < 0) off = left;
+          if (left + w - off > 1760) off = left + w - 1760;
+          st.offs[ri] = off;
+          const tiles = $(".tiles", r);
+          if (instant) tiles.style.transition = "none";
+          tiles.style.transform = "translateX(" + -off + "px)";
+        });
+        if (instant) requestAnimationFrame(() => { rowsEl.style.transition = ""; $$(".tiles", stage).forEach((t) => (t.style.transition = "")); });
+      },
+      hero(it) {
+        if (!it) return;
+        const k = it.t + ":" + (it.id || it.idx || it.key);
+        if (k === this.lastHero) return;
+        this.lastHero = k;
+        const h = heroFor(it);
+        clearInterval(this.pv); clearTimeout(this.pvT);
+        this.bg(h.bg[0], h.portrait);
+        // Memories preview themselves: after a moment the background starts stepping through their photos.
+        if (h.preview && h.bg.length > 1) {
+          let i = 0;
+          this.pvT = setTimeout(() => { this.pv = setInterval(() => { i = (i + 1) % h.bg.length; this.bg(h.bg[i], false, true); }, 3200); }, 1400);
+        }
+        const copy = $("#heroCopy", stage);
+        const fill = () => {
+          copy.innerHTML = '<div class="who">' + h.who + "</div>" + '<div class="hero-meta t-body sep">' + h.meta + "</div>" + '<div class="hero-quote">' + h.quote + "</div>";
+          copy.classList.remove("is-swapping");
+        };
+        if (copy.innerHTML) { copy.classList.add("is-swapping"); clearTimeout(this.swapT); this.swapT = setTimeout(fill, 160); } else fill();
+        const dots = $("#heroDots", stage), n = h.dots || 0;
+        dots.style.visibility = n > 1 ? "visible" : "hidden";
+        dots.innerHTML = Array.from({ length: n }, (_, i) => "<i" + (i === 0 ? ' class="on"' : "") + "></i>").join("");
+      },
+      bg(src, portrait, kb) {
+        const back = this.heroFront === "heroA" ? "heroB" : "heroA";
+        const b = $("#" + back, stage), f = $("#" + this.heroFront, stage);
+        if (!b) return;
+        b.style.backgroundImage = "url(" + src + ")";
+        b.classList.toggle("is-portrait", !!portrait);
+        b.classList.toggle("kb", !!kb);
+        b.style.opacity = 1; f.style.opacity = 0; this.heroFront = back;
+      },
+      act(a, el) {
+        if (a === "thistv") return go("thistv");
+        const it = this.item(+el.dataset.r, +el.dataset.c);
+        if (it) activate(it, this, +el.dataset.r);
+      },
+      key(k) {
+        const st = lstate(key);
+        if (cfg.home) {
+          if (toastState.countdown && ["up", "down", "left", "right"].includes(k)) cancelArrival();
+          if (k === "ok" && toastState.countdown) { playArrival(); return true; }
+          if (k === "back" && $(".toast", stage)) { cancelArrival(); return true; }
+        }
+        if (k === "back") { if (cfg.back) go(cfg.back); return true; }
+        if (st.onChip) {
+          if (k === "down") { setFocus(this.el(st.row, st.cols[st.row] || 0)); this.layout(); return true; }
+          if (k !== "ok") return true;
+          return;
+        }
+        const r = st.row, c = st.cols[r] || 0;
+        if (k === "left" || k === "right") { const el = this.el(r, c + (k === "left" ? -1 : 1)); if (el) setFocus(el); return true; }
+        if (k === "up") { if (r === 0) { if (cfg.chip) { setFocus($("#chip", stage)); this.layout(); } } else setFocus(this.el(r - 1, Math.min(st.cols[r - 1] || 0, this.rows[r - 1].items.length - 1))); return true; }
+        if (k === "down") { if (r < this.rows.length - 1) setFocus(this.el(r + 1, st.cols[r + 1] || 0)); return true; }
+      },
+    };
+  }
+
+  // What OK does on each kind of card.
+  function activate(it, scr, r) {
+    const st = lstate(scr.sname);
+    const back = scr.sname === "moment" ? "moment/" + scr.arg : scr.sname;
+    if (it.t === "moment") {
+      const m = MOMENTS[it.id];
+      if (m.bulk) { LSTATE.moment = null; return go("moment/" + it.id); } // a big upload opens month by month first (Play all is focused)
+      const ids = scr.rows[r].items.filter((x) => x.t === "moment" && !MOMENTS[x.id].bulk).map((x) => x.id);
+      return openViewer(ids, Math.max(0, ids.indexOf(it.id)), { route: back, key: scr.sname, focusId: it.key });
+    }
+    if (it.t === "photo") return openViewer(["m-bulk"], 0, { route: back, key: scr.sname, focusId: it.key }, it.idx);
+    if (it.t === "memory" || it.t === "person" || it.t === "featured") {
+      const queue = it.t === "featured" ? newestMems() : scr.rows[r].items.filter((x) => x.t === "memory" || x.t === "person").map((x) => x.id);
+      return playMemory(it.id, queue, { route: back, key: scr.sname });
+    }
+    if (it.t === "channel" || it.t === "channelAll") { st.focusId = it.key; return go("channel/" + (it.id || "all")); }
+    if (it.t === "door") return go("memories");
+    if (it.t === "btn") {
+      if (it.act === "playall") return openViewer(["m-bulk"], 0, { route: back, key: scr.sname, focusId: it.key }, 0);
+      if (it.act === "playfeatured") return playMemory(it.id, newestMems(), { route: back, key: scr.sname });
+      if (it.act === "seeall") return go("memories");
+    }
+  }
+
+  /* ----- Row builders ----- */
+  const M = (id) => ({ t: "moment", id, key: "mo:" + id });
+  const MM = (id) => ({ t: MEM[id].kind === "person" ? "person" : "memory", id, key: "me:" + id }); // People rail: faces
+  const MC = (id) => ({ t: "memory", id, key: "me:" + id }); // mixed rails: everything as a wide memory card
+  function momentRows() {
+    const visible = Object.keys(MOMENTS).filter((id) => !MOMENTS[id].hidden);
+    const recent = ["m-tom-new", "m-bulk", "m-may", "m-ed-video", "m-cake", "m-autumn", "m-drawing", "m-dinner", "m-may-sofa", "m-newborn"].filter((id) => visible.includes(id));
+    const byPerson = (p) => recent.filter((id) => MOMENTS[id].by === p).map(M);
+    return {
+      recent: { title: "Recent from everyone", items: recent.map(M) },
+      members: [["sarah", "Sarah’s moments"], ["ed", "Ed’s moments"], ["may", "May’s moments"], ["tom", "Tom’s moments"]].map(([p, t]) => ({ title: t, items: byPerson(p) })),
+    };
+  }
+  function memoryRows() {
+    const fresh = memIds().filter((id) => MEM[id].isNew);
+    return [
+      { title: "New memories", items: fresh.map(MC), hint: "made by TeaTime from the family’s photos" },
+      { title: "People", items: memIds("person").map(MM) },
+      { title: "Events", items: memIds("event").map(MM) },
+      { title: "Places", items: memIds("place").map(MM) },
+      { title: "Timeline", items: memIds("timeline").map(MM) },
+    ];
+  }
+  function channelItems() {
+    const ids = memIds().sort((a, b) => memOrder[MEM[a].kind] - memOrder[MEM[b].kind]);
+    return [{ t: "channelAll", key: "ch:all" }].concat(ids.map((id) => ({ t: "channel", id, key: "ch:" + id })));
+  }
+  const featuredId = () => newestMems()[0];
+  function homeRows() {
+    const { recent, members } = momentRows();
+    if (concept === "A") return [recent].concat(memoryRows(), members);
+    if (concept === "B") return [recent, { title: "Memories", items: [{ t: "door", key: "door", label: "Memories" }] }].concat(members);
+    if (concept === "C") return [recent, { title: "Memory channels", items: channelItems(), hint: "pick one and it plays non-stop" }].concat(members);
+    const f = featuredId();
+    return [
+      { type: "buttons", items: [{ t: "btn", act: "playfeatured", id: f, label: "Play memory", key: "btn:play" }, { t: "btn", act: "seeall", label: "See all memories", key: "btn:all" }] },
+      recent,
+      { title: "Memories", items: newestMems().slice(0, 6).map(MC).concat([{ t: "door", key: "door", label: "See all memories" }]) },
+    ].concat(members);
+  }
+
+  S.home = railScreen("home", { chip: true, home: true, rows: homeRows, featured: () => ({ t: "featured", id: featuredId() }) });
+  S.memories = railScreen("memories", { back: "home", crumb: "Memories", rows: memoryRows });
+  S.moment = railScreen("moment", {
+    back: "home",
+    rows(id) {
+      const m = MOMENTS[id] || MOMENTS["m-bulk"];
+      const rows = [{ type: "buttons", items: [{ t: "btn", act: "playall", label: "Play all " + m.items.length, key: "btn:playall" }] },
+        { title: "Memories from this upload", items: (m.memories || []).filter(visibleMem).map(MC) }];
+      BULK_MONTHS.forEach(([mo]) => {
+        const items = m.items.filter((x) => x.m === mo);
+        rows.push({ title: monthLabel(mo) + DOT + items.length + " photos", items: items.map((x) => ({ t: "photo", idx: x.idx, key: "ph:" + x.idx })) });
+      });
+      return rows;
+    },
+    featured: () => ({ t: "bulkhead", idx: 0 }),
+  });
+
+  /* ================= New moment arriving (toast on Home only) ================= */
   const toastState = { countdown: false };
   function newMoment() {
     const m = MOMENTS["m-tom-new"];
     m.hidden = false; m.isNew = true;
     if (current !== "home") return false; // never steal focus outside Home: it waits in Recent with a New pill
-    rerenderHome();
+    rerender();
     clearToast();
     const t = document.createElement("div");
     t.className = "toast";
@@ -397,54 +647,42 @@
   function cancelArrival() { toastState.countdown = false; clearToast(true); }
   function playArrival() {
     toastState.countdown = false; clearToast();
-    home.row = 0; home.cols[0] = 0;
-    openViewer(buildRows()[0].ids, 0, { row: 0 });
+    openViewer(["m-tom-new"], 0, { route: "home", key: "home", focusId: "mo:m-tom-new" });
   }
-  function rerenderHome() {
-    const keepId = focused && focused.dataset.id;
-    stage.innerHTML = S.home.html();
+  function rerender() { // redraw the current rail screen in place, keeping focus on the same card
+    if (!screen || !screen.rows) return;
+    const st = lstate(screen.sname);
+    if (focused && focused.dataset.key) st.focusId = focused.dataset.key;
+    screen.unmount && screen.unmount();
+    stage.innerHTML = screen.html(screen.arg);
     focused = null;
-    if (keepId) { const rows = buildRows(); const c = rows[home.row].ids.indexOf(keepId); if (c >= 0) home.cols[home.row] = c; }
-    S.home.mount();
+    screen.mount(screen.arg);
   }
 
-  /* ----- Viewer ----- */
+  /* ================= Moment viewer ================= */
   const V = { list: [], mi: 0, pi: 0, t: 0, paused: false, from: null };
   const PHOTO_SECONDS = 6;
-  function openViewer(list, mi, from) { V.list = list.slice(); V.mi = mi; V.pi = 0; V.t = 0; V.paused = false; V.from = from || null; go("viewer/" + list[mi]); }
+  function openViewer(list, mi, from, pi) { V.list = list.slice(); V.mi = mi; V.pi = pi || 0; V.t = 0; V.paused = false; V.from = from || null; go("viewer/" + list[mi]); }
   S.viewer = {
-    html() {
-      return '<div class="scr viewer" id="viewer"></div>';
-    },
+    html() { return '<div class="scr viewer" id="viewer"></div>'; },
     mount(arg) {
-      if (!V.list.length || V.list[V.mi] !== arg) { // opened from a link: play that moment, then the Recent row
-        const ids = buildRows()[0].ids; const i = Math.max(0, ids.indexOf(arg));
-        V.list = ids; V.mi = i; V.pi = 0; V.t = 0; V.paused = false; V.from = { row: 0 };
-      }
-      this.paint();
-      this.wake();
+      if (!V.list.length || V.list[V.mi] !== arg) { const ids = momentRows().recent.items.map((x) => x.id).filter((id) => !MOMENTS[id].bulk); V.list = ids; V.mi = Math.max(0, ids.indexOf(arg)); V.pi = 0; V.t = 0; V.paused = false; V.from = { route: "home", key: "home" }; }
+      this.paint(); this.wake();
       let last = performance.now();
-      const tick = (now) => {
-        const dt = (now - last) / 1000; last = now;
-        if (!V.paused && !$(".dialog-back", stage)) {
-          const item = this.item();
-          V.t += dt / (item.type === "video" ? item.dur : PHOTO_SECONDS);
-          if (V.t >= 1) { this.step(1, true); } else this.progress();
-        }
-        this.raf = requestAnimationFrame(tick);
-      };
-      this.raf = requestAnimationFrame(tick);
+      this.tick = setInterval(() => {
+        const now = performance.now(), dt = Math.min(1, (now - last) / 1000); last = now;
+        if (!V.paused && !document.hidden) { const item = this.item(); V.t += dt / (item.type === "video" ? item.dur : PHOTO_SECONDS); if (V.t >= 1) this.step(1, true); else this.progress(); }
+      }, 100);
     },
-    unmount() { cancelAnimationFrame(this.raf); clearTimeout(this.quietT); },
+    unmount() { clearInterval(this.tick); clearTimeout(this.quietT); },
     moment() { return MOMENTS[V.list[V.mi]]; },
     item() { return this.moment().items[V.pi]; },
     paint() {
       const m = this.moment(), it = this.item(), who = PEOPLE[m.by];
       m.isNew = false;
       const n = m.items.length, vid = it.type === "video";
-      // Pill: photo position inside a multi-photo moment, otherwise the moment's position in what's playing.
       const count = vid ? "Video" + DOT + (V.mi + 1) + " of " + V.list.length : n > 1 ? (V.pi + 1) + " / " + n : (V.mi + 1) + " / " + V.list.length;
-      const meta = FAMILY_OF() + DOT + m.date + (vid ? DOT + "Video" : n > 1 ? DOT + "Photo " + (V.pi + 1) + " of " + n : "");
+      const meta = FAMILY_OF() + DOT + (it.date || m.date) + (vid ? DOT + "Video" : n > 1 ? DOT + "Photo " + (V.pi + 1) + " of " + n : "");
       const ctrls = '<div class="ctrls"><div class="ring" data-f data-act="prev"><img src="' + A("icon-chev-left-39.svg") + '" alt="Previous"></div>' +
         '<div class="ring" data-f data-act="pause" id="pp"><img src="' + A(V.paused ? "icon-play-39.svg" : "icon-pause.svg") + '" alt=""></div>' +
         '<div class="ring" data-f data-act="next"><img src="' + A("icon-chev-right-39.svg") + '" alt="Next"></div></div>';
@@ -471,10 +709,8 @@
     progress() {
       const bar = $("#bar", stage); if (!bar) return;
       const m = this.moment(), it = this.item();
-      if (it.type === "video") {
-        bar.style.width = V.t * 100 + "%"; $("#head", stage).style.left = V.t * 100 + "%";
-        $("#tcur", stage).textContent = mmss(V.t * it.dur);
-      } else bar.style.width = ((V.pi + V.t) / m.items.length) * 100 + "%";
+      if (it.type === "video") { bar.style.width = V.t * 100 + "%"; $("#head", stage).style.left = V.t * 100 + "%"; $("#tcur", stage).textContent = mmss(V.t * it.dur); }
+      else bar.style.width = ((V.pi + V.t) / m.items.length) * 100 + "%";
     },
     step(d, auto) {
       const m = this.moment();
@@ -482,7 +718,7 @@
       if (d > 0) {
         if (V.pi < m.items.length - 1) V.pi++;
         else if (V.mi < V.list.length - 1) { V.mi++; V.pi = 0; }
-        else return this.exit(); // end of the row: back to Home on that card
+        else return this.exit();
       } else {
         if (V.pi > 0) V.pi--;
         else if (V.mi > 0) { V.mi--; V.pi = 0; }
@@ -490,7 +726,7 @@
       if (!auto) V.paused = false;
       const quiet = $("#viewer", stage).classList.contains("is-quiet");
       this.paint();
-      if (!auto) this.wake(); else if (quiet) $("#viewer", stage).classList.add("is-quiet"); // auto-advance keeps the quiet view
+      if (!auto) this.wake(); else if (quiet) $("#viewer", stage).classList.add("is-quiet");
     },
     togglePause() {
       V.paused = !V.paused;
@@ -508,24 +744,175 @@
       this.quietT = setTimeout(() => { if (!V.paused) v.classList.add("is-quiet"); else this.wake(); }, 4000);
     },
     exit() {
-      const id = V.list[V.mi];
-      if (V.from) { const rows = buildRows(); const r = Math.min(V.from.row, rows.length - 1); home.row = r; const c = rows[r].ids.indexOf(id); if (c >= 0) home.cols[r] = c; home.onChip = false; }
-      go("home");
+      const f = V.from || { route: "home", key: "home" };
+      const m = this.moment();
+      const st = lstate(f.key);
+      st.focusId = m.bulk ? "ph:" + V.pi : f.focusId && f.focusId.startsWith("mo:") ? "mo:" + V.list[V.mi] : f.focusId;
+      go(f.route);
     },
-    act(a, el) {
-      this.lastCtrl = a;
-      if (a === "prev") this.step(-1); else if (a === "next") this.step(1); else if (a === "pause") this.togglePause();
-    },
+    act(a) { this.lastCtrl = a; if (a === "prev") this.step(-1); else if (a === "next") this.step(1); else if (a === "pause") this.togglePause(); },
     key(k) {
       const v = $("#viewer", stage), quiet = v && v.classList.contains("is-quiet");
       if (k === "back") { this.exit(); return true; }
       if (k === "left" || k === "right") { const a = k === "left" ? "prev" : "next"; this.lastCtrl = a; press($('[data-act="' + a + '"]', stage)); return true; }
-      if (k === "ok") { if (quiet) { this.wake(); return true; } this.lastCtrl = focused && focused.dataset.act; if (focused) press(focused); return true; }
+      if (k === "ok") { if (quiet) { this.wake(); return true; } if (focused) press(focused); return true; }
       if (k === "up" || k === "down") { this.wake(); return true; }
     },
   };
 
-  /* ----- Ambient (after 20 s idle on Home) ----- */
+  /* ================= Memory player (a memory plays as a short clip) + channels ================= */
+  const PL = { id: null, queue: [], from: null, i: 0, t: 0, phase: "title", paused: false, mode: "memory", ch: 0 };
+  const SECS = 3.6, TITLE_SECS = 2.8, NEXT_SECS = 5;
+  function playMemory(id, queue, from) { PL.id = id; PL.queue = queue && queue.length ? queue : [id]; PL.from = from || { route: "home", key: "home" }; lstate(PL.from.key).focusId = "me:" + id; go("play/" + id); }
+  function chapterOf(m, i) {
+    if (!m.chapters) return null;
+    const months = [...new Set(m.photos.map((p) => PH[p].m))];
+    const mo = PH[m.photos[i]].m, inMonth = m.photos.filter((p) => PH[p].m === mo);
+    return { months, idx: months.indexOf(mo), label: monthLabel(mo), pos: inMonth.indexOf(m.photos[i]) + 1, n: inMonth.length };
+  }
+  const CHANNELS = () => ["all"].concat(memIds().sort((a, b) => memOrder[MEM[a].kind] - memOrder[MEM[b].kind]));
+  const chTitle = (id) => (id === "all" ? "Everything" : MEM[id].title);
+  const chPhotos = (id) => (id === "all" ? Object.keys(PH).reverse() : MEM[id].photos);
+
+  function playerScreen(mode) {
+    return {
+      html() { return '<div class="scr player" id="player"></div>'; },
+      mount(arg) {
+        PL.mode = mode;
+        if (mode === "memory") { if (!MEM[arg]) return go("home"); PL.id = arg; if (!PL.queue.includes(arg)) { PL.queue = newestMems(); PL.from = { route: "home", key: "home" }; } PL.phase = "title"; }
+        else { const list = CHANNELS(); PL.ch = Math.max(0, list.indexOf(arg)); PL.id = list[PL.ch]; PL.phase = "play"; if (!PL.from || PL.from.key !== "home") PL.from = { route: "home", key: "home" }; }
+        PL.i = 0; PL.t = 0; PL.paused = false; PL.elapsed = 0;
+        this.build();
+        let last = performance.now();
+        this.tick = setInterval(() => { // real elapsed time, so slow TV hardware keeps the same pace
+          const now = performance.now(), dt = Math.min(1, (now - last) / 1000); last = now;
+          if (!PL.paused && !document.hidden) this.advance(dt);
+        }, 100);
+      },
+      unmount() { clearInterval(this.tick); clearTimeout(this.quietT); clearTimeout(this.stripT); },
+      photos() { return mode === "channel" ? chPhotos(PL.id) : MEM[PL.id].photos; },
+      advance(dt) {
+        PL.elapsed += dt;
+        if (PL.phase === "title") { if (PL.elapsed > TITLE_SECS) { PL.phase = "play"; PL.elapsed = 0; this.build(); } return; }
+        if (PL.phase === "next") { if (PL.elapsed > NEXT_SECS) this.playNext(); return; }
+        PL.t += dt / SECS;
+        if (PL.t >= 1) this.step(1, true); else this.progress();
+      },
+      // Whole player redraw (on start, after the title card, on channel change).
+      build() {
+        const p = $("#player", stage); if (!p) return;
+        const photos = this.photos();
+        if (mode === "memory" && PL.phase === "title") {
+          const m = MEM[PL.id];
+          p.innerHTML = '<div class="pl-photo kb kb-a" style="background-image:url(' + phSrc(photos[0]) + ')"></div><div class="pl-title-dim"></div>' +
+            '<div class="pl-title">' + kindChip(m) + "<h1>" + m.title + "</h1><p>" + m.when + DOT + photos.length + " photos" + (m.from.length ? DOT + "from " + names(m.from) : "") + "</p></div>";
+          return;
+        }
+        const m = mode === "memory" ? MEM[PL.id] : null;
+        const ctrls = '<div class="ctrls"><div class="ring" data-f data-act="prev"><img src="' + A("icon-chev-left-39.svg") + '" alt="Previous"></div>' +
+          '<div class="ring" data-f data-act="pause" id="pp"><img src="' + A("icon-pause.svg") + '" alt=""></div>' +
+          '<div class="ring" data-f data-act="next"><img src="' + A("icon-chev-right-39.svg") + '" alt="Next"></div></div>';
+        const avatars = m ? (m.kind === "person" ? '<span class="face sm" style="' + faceStyle(m.person) + '"></span>' : '<div class="stack">' + m.from.map((f) => '<img src="' + (PEOPLE[f].avatar || "") + '" alt="">').join("") + "</div>") : "";
+        p.innerHTML = '<div id="plPhotos"></div><div class="v-scrim-b"></div><div class="v-scrim-t"></div>' +
+          '<div class="story-chip" id="storyChip"></div><div class="segs" id="segs"></div>' +
+          (mode === "channel" ? '<div class="ch-strip" id="chStrip"></div>' : "") +
+          '<div class="v-info"><div><div class="v-from">' + avatars + '<div><div class="t-title">' + (m ? m.title : chTitle(PL.id)) + '</div><div class="meta t-body" id="plMeta"></div></div></div>' +
+          '<div class="v-caption t-body" id="plCap"></div></div>' + ctrls + '</div><div class="v-progress"><i id="bar"></i></div>';
+        focused = null; setFocus($("#pp", p));
+        this.show(true);
+        this.wake();
+        if (mode === "channel") this.strip();
+      },
+      show(first) {
+        const photos = this.photos(), id = photos[PL.i], ph = PH[id];
+        const wrap = $("#plPhotos", stage); if (!wrap) return;
+        const d = document.createElement("div");
+        d.className = "pl-photo kb " + (PL.i % 2 ? "kb-b" : "kb-a") + (ph.o === "p" ? " is-portrait" : "") + (first ? "" : " fade-in");
+        d.style.backgroundImage = "url(" + phSrc(id) + ")";
+        wrap.appendChild(d);
+        while (wrap.children.length > 2) wrap.firstChild.remove();
+        const m = mode === "memory" ? MEM[PL.id] : null;
+        const ch = m && chapterOf(m, PL.i);
+        $("#storyChip", stage).innerHTML = (m ? kindChip(m) : '<span class="kind kind-channel"><i class="live"></i>Channel</span>') + '<span class="sep">' +
+          (ch ? ch.label + DOT + ch.pos + " of " + ch.n + " this month" : m ? "Photo " + (PL.i + 1) + " of " + photos.length : chTitle(PL.id)) + "</span>";
+        const segN = ch ? ch.months.length : Math.min(photos.length, 12);
+        const segOn = ch ? ch.idx : Math.min(PL.i, 11);
+        $("#segs", stage).innerHTML = photos.length > 12 && !ch ? "" : Array.from({ length: segN }, (_, i) => '<i class="' + (i < segOn ? "done" : i === segOn ? "on" : "") + '"><b></b></i>').join("");
+        $("#plMeta", stage).textContent = m ? m.label + "  ·  " + m.when + (m.from.length ? "  ·  from " + names(m.from) : "") : "Channel  ·  plays non-stop";
+        $("#plCap", stage).textContent = ph.date + (ph.place ? " — " + ph.place : "");
+        this.progress();
+      },
+      progress() {
+        const n = this.photos().length, bar = $("#bar", stage);
+        if (bar) bar.style.width = ((PL.i + PL.t) / n) * 100 + "%";
+        const seg = $("#segs i.on b", stage);
+        if (seg) { const m = mode === "memory" ? MEM[PL.id] : null, ch = m && chapterOf(m, PL.i); seg.style.width = (ch ? ((ch.pos - 1 + PL.t) / ch.n) * 100 : PL.t * 100) + "%"; }
+      },
+      step(d, auto) {
+        if (PL.phase !== "play") return;
+        const n = this.photos().length;
+        PL.t = 0;
+        if (d > 0) {
+          if (PL.i < n - 1) PL.i++;
+          else if (mode === "channel") PL.i = 0; // a channel never ends
+          else return this.upNext();
+        } else if (PL.i > 0) PL.i--;
+        if (!auto) PL.paused = false;
+        this.show();
+        if (!auto) this.wake();
+      },
+      upNext() {
+        const q = PL.queue.filter(visibleMem), next = q[q.indexOf(PL.id) + 1];
+        if (!next) return this.exit();
+        PL.phase = "next"; PL.elapsed = 0; PL.nextId = next;
+        const n = MEM[next], p = $("#player", stage);
+        const card = document.createElement("div");
+        card.className = "upnext";
+        card.innerHTML = '<p class="t-small muted">Up next</p><div class="un-row"><div class="un-thumb" style="background-image:url(' + phSrc(n.photos[0]) + ')"></div><div>' + kindChip(n) + "<b>" + n.title + "</b><span>" + n.when + DOT + n.photos.length + " photos</span></div></div>" +
+          '<p class="t-small muted">Plays in 5 s' + DOT + "OK to play now" + DOT + "Back to stop</p><div class=\"drain is-run\"></div>";
+        p.classList.remove("is-quiet");
+        p.appendChild(card);
+      },
+      playNext() { PL.id = PL.nextId; PL.i = 0; PL.t = 0; PL.phase = "title"; PL.elapsed = 0; lstate(PL.from.key).focusId = "me:" + PL.id; history.replaceState(null, "", "#play/" + PL.id); this.build(); },
+      switchChannel(d) {
+        const list = CHANNELS();
+        PL.ch = (PL.ch + d + list.length) % list.length; PL.id = list[PL.ch]; PL.i = 0; PL.t = 0;
+        lstate("home").focusId = "ch:" + (PL.id === "all" ? "all" : PL.id);
+        history.replaceState(null, "", "#channel/" + PL.id);
+        this.build();
+      },
+      strip() {
+        const list = CHANNELS(), s = $("#chStrip", stage); if (!s) return;
+        const at = (d) => chTitle(list[(PL.ch + d + list.length) % list.length]);
+        s.innerHTML = '<span class="prev">◀  ' + at(-1) + '</span><span class="cur">' + at(0) + '</span><span class="next">' + at(1) + "  ▶</span>";
+        s.classList.add("is-on"); clearTimeout(this.stripT); this.stripT = setTimeout(() => s.classList.remove("is-on"), 3000);
+      },
+      togglePause() { PL.paused = !PL.paused; const pp = $("#pp img", stage); if (pp) pp.src = A(PL.paused ? "icon-play-39.svg" : "icon-pause.svg"); $$(".pl-photo", stage).forEach((e) => (e.style.animationPlayState = PL.paused ? "paused" : "running")); this.wake(); },
+      wake() {
+        const p = $("#player", stage); if (!p) return;
+        p.classList.remove("is-quiet"); clearTimeout(this.quietT);
+        this.quietT = setTimeout(() => { if (!PL.paused && PL.phase === "play") p.classList.add("is-quiet"); }, 4000);
+      },
+      exit() { go(PL.from.route); },
+      act(a) { if (a === "prev") this.step(-1); else if (a === "next") this.step(1); else if (a === "pause") this.togglePause(); },
+      key(k) {
+        if (k === "back") { this.exit(); return true; }
+        if (PL.phase === "title") { if (k === "ok") { PL.phase = "play"; PL.elapsed = 0; this.build(); } return true; }
+        if (PL.phase === "next") { if (k === "ok") this.playNext(); return true; }
+        const quiet = $("#player", stage).classList.contains("is-quiet");
+        if (k === "left" || k === "right") {
+          if (mode === "channel") { this.switchChannel(k === "left" ? -1 : 1); return true; }
+          press($('[data-act="' + (k === "left" ? "prev" : "next") + '"]', stage)); return true;
+        }
+        if (k === "ok") { if (quiet) { this.wake(); return true; } this.togglePause(); return true; }
+        if (k === "up" || k === "down") { this.wake(); if (mode === "channel") this.strip(); return true; }
+      },
+    };
+  }
+  S.play = playerScreen("memory");
+  S.channel = playerScreen("channel");
+
+  /* ================= Ambient (after 20 s idle on Home) ================= */
   S.ambient = {
     html() {
       return '<div class="scr"><div class="amb-photo" id="ambA"></div><div class="amb-photo" id="ambB" style="opacity:0"></div><div class="amb-dim"></div><div class="amb-scrim"></div>' +
@@ -533,32 +920,33 @@
         '<div class="amb-chip" id="ambChip"></div><div class="amb-dots" id="ambDots"></div></div>';
     },
     mount() {
-      const ids = buildRows()[0].ids;
       this.slides = [];
-      ids.forEach((id) => MOMENTS[id].items.forEach((it) => { if (it.type === "photo" && it.o !== "p") this.slides.push({ id, src: it.src }); }));
+      if (concept === "C" || concept === "D") { // ambient becomes a memory channel
+        newestMems().forEach((id) => MEM[id].photos.forEach((p) => { if (PH[p].o !== "p") this.slides.push({ src: phSrc(p), title: MEM[id].label + DOT + MEM[id].title, cap: PH[p].date + (PH[p].place ? " — " + PH[p].place : "") }); }));
+      } else {
+        momentRows().recent.items.forEach(({ id }) => { const m = MOMENTS[id]; if (m.bulk) return; m.items.forEach((it) => { if (it.type === "photo" && it.o !== "p") this.slides.push({ src: it.src, title: PEOPLE[m.by].name + DOT + FAMILY_OF() + DOT + m.date, cap: m.caption }); }); });
+      }
       this.i = 0; this.front = "ambA";
       this.show(true);
       this.t = setInterval(() => { this.i = (this.i + 1) % this.slides.length; this.show(); }, 8000);
-      this.clock();
-      this.c = setInterval(() => this.clock(), 5000);
+      this.clock(); this.c = setInterval(() => this.clock(), 5000);
     },
     unmount() { clearInterval(this.t); clearInterval(this.c); },
     clock() { const d = new Date(); const t = $("#ambTime", stage); if (t) { t.textContent = clock12(d); $("#ambDate", stage).textContent = dateLabel(d); } },
     show(first) {
-      const s = this.slides[this.i], m = MOMENTS[s.id];
+      const s = this.slides[this.i];
       const back = first ? this.front : this.front === "ambA" ? "ambB" : "ambA";
       $("#" + back, stage).style.backgroundImage = "url(" + s.src + ")";
       if (!first) { $("#" + back, stage).style.opacity = 1; $("#" + this.front, stage).style.opacity = 0; this.front = back; }
-      const chipEl = $("#ambChip", stage);
-      chipEl.innerHTML = "<b>" + PEOPLE[m.by].name + DOT + FAMILY_OF() + DOT + m.date + "</b><p>" + m.caption + "</p>";
+      $("#ambChip", stage).innerHTML = '<b class="sep">' + s.title + "</b><p>" + s.cap + "</p>";
       const n = Math.min(8, this.slides.length);
       $("#ambDots", stage).innerHTML = Array.from({ length: n }, (_, i) => "<i" + (i === this.i % n ? ' class="on"' : "") + "></i>").join("");
     },
-    key() { go("home"); return true; }, // any key wakes, and is not acted on
+    key() { go("home"); return true; },
     click() { go("home"); },
   };
 
-  /* ----- This TV ----- */
+  /* ================= This TV / family ================= */
   S.thistv = {
     html() {
       const total = FAMILIES.reduce((s, f) => s + f.moments, 0);
@@ -569,7 +957,7 @@
           '<div><div class="t-headline">' + f.name + '</div><div class="meta">' + f.members.length + " members" + DOT + f.moments + " moments</div></div></div>").join("") + "</div></div>" +
         '<div><p class="section-label">Manage</p><div class="row-btn" data-f data-act="signout"><span class="ic"><img src="' + A("icon-log-out.svg") + '" alt=""></span>Sign out of this TV</div></div></div></div>';
     },
-    mount(arg) { if (this.lastFam) { const el = $('[data-fam="' + this.lastFam + '"]', stage); if (el) setFocus(el); } },
+    mount() { if (this.lastFam) { const el = $('[data-fam="' + this.lastFam + '"]', stage); if (el) setFocus(el); } },
     act(a, el) {
       if (a === "family") { this.lastFam = el.dataset.fam; go("family/" + el.dataset.fam); }
       if (a === "signout") confirmSignOut();
@@ -605,12 +993,12 @@
     key(k) { if (k === "back") { go("thistv"); return true; } },
   };
 
-  /* ---------------- Router ---------------- */
+  /* ================= Router ================= */
   let current = null;
   let pendingToast = null;
   function connect(msg) {
     paired = true; store.set("paired", true);
-    home.row = 0; home.cols = []; home.onChip = false;
+    LSTATE.home = null;
     pendingToast = [msg, "Moments will start arriving here", 3200];
     go("home");
   }
@@ -631,14 +1019,15 @@
     if (screen.mount) screen.mount(arg);
     if (!focused) { const f = $("#first", stage) || focusables()[0]; if (f) setFocus(f); }
     if (pendingToast) { simpleToast.apply(null, pendingToast); pendingToast = null; }
-    $$(".review a").forEach((a) => a.classList.toggle("is-current", a.getAttribute("href") === location.hash || a.getAttribute("href") === "#" + name));
+    $$(".review a").forEach((a) => a.classList.toggle("is-current", a.getAttribute("href") === location.hash));
     resetIdle();
   }
   window.addEventListener("hashchange", render);
 
-  /* ---------------- Input ---------------- */
+  /* ================= Input ================= */
   const KEYMAP = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", Enter: "ok", " ": "ok", Escape: "back", Backspace: "delete", GoBack: "back", BrowserBack: "back" };
   document.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("select")) return; // the review panel's dropdown keeps its own keys
     let k = KEYMAP[e.key] || (/^\d$/.test(e.key) ? e.key : null);
     if (!k || e.metaKey || e.ctrlKey || e.altKey) return;
     e.preventDefault();
@@ -649,7 +1038,7 @@
     if (["up", "down", "left", "right"].includes(k)) moveFocus(k);
     else if (k === "ok") press(focused);
   });
-  stage.addEventListener("mouseover", (e) => { const el = e.target.closest("[data-f]"); if (el && current !== "ambient") setFocus(el); });
+  stage.addEventListener("mouseover", (e) => { const el = e.target.closest("[data-f]"); if (el && current !== "ambient" && !el.closest(".is-away")) setFocus(el); });
   stage.addEventListener("click", (e) => {
     resetIdle();
     if (current === "ambient") return screen.click();
@@ -658,37 +1047,50 @@
     if (el) { setFocus(el); press(el); }
   });
 
-  /* Idle → ambient after 20 s on Home (only when nothing is counting down) */
   let idleT = null;
   function resetIdle() {
     clearTimeout(idleT);
     idleT = setTimeout(() => { if (current === "home" && !toastState.countdown && !document.hidden) go("ambient"); }, 20000);
   }
   document.addEventListener("mousemove", () => { if (current !== "ambient") resetIdle(); }, { passive: true });
-
-  /* Live clock in the profile chip */
   setInterval(() => $$("[data-clock]", stage).forEach((el) => (el.textContent = timeLabel(new Date()) + DOT + TV.name)), 10000);
 
-  /* ---------------- Review panel ---------------- */
+  /* ================= Review panel ================= */
+  const sel = $("#concept"), chk = $("#launch");
+  const syncUrl = () => history.replaceState(null, "", "?concept=" + concept + (launch ? "&launch=1" : "") + location.hash); // a copied link opens the same option
+  if (sel) { sel.value = concept; sel.addEventListener("change", () => { concept = sel.value; store.set("concept", concept); LSTATE.home = null; syncUrl(); describe(); go("home"); }); }
+  if (chk) { chk.checked = launch; chk.addEventListener("change", () => { launch = chk.checked; store.set("launch", launch); LSTATE.home = null; LSTATE.memories = null; syncUrl(); describe(); if (screen && screen.rows) rerender(); else go("home"); }); }
+  function describe() {
+    const d = $("#conceptNote"); if (!d) return;
+    d.textContent = {
+      A: "Every memory type gets its own rail on Home: New memories, People, Events, Places, Timeline.",
+      B: "Home stays as it was, plus one Memories card. It opens a Memories screen with all the rails.",
+      C: "Memories become TV channels. Pick one and it plays non-stop; left and right change channel.",
+      D: "Home leads with one featured memory, then one Memories rail ending in See all. Idle → memory channel.",
+    }[concept] + (launch ? " Launch version: no People or Events yet." : "");
+  }
+  describe();
   document.addEventListener("click", (e) => {
-    if (e.target.closest(".review") && document.activeElement && document.activeElement.blur) setTimeout(() => document.activeElement.blur(), 0); // keep the arrows for the TV
+    if (e.target.closest(".review") && !e.target.closest("select,input,label") && document.activeElement && document.activeElement.blur) setTimeout(() => document.activeElement.blur(), 0);
     const b = e.target.closest("[data-sim]");
     if (b) {
       const s = b.dataset.sim;
       if (s === "paired") connect("Connected to The Johnsons");
       if (s === "newmoment") {
-        if (!newMoment()) { // not on Home: no toast, it waits in Recent
-          const label = b.textContent; b.textContent = "Added to Recent (no toast off Home)";
-          setTimeout(() => (b.textContent = label), 2500);
-        }
+        if (!newMoment()) { const label = b.textContent; b.textContent = "Added to Recent (no toast off Home)"; setTimeout(() => (b.textContent = label), 2500); }
       }
-      if (s === "reset") { paired = false; store.set("paired", false); MOMENTS["m-tom-new"].hidden = true; home.cols = []; go("splash"); }
+      if (s === "newmemory") { // a new memory arrives quietly: New memories rail / featured, no pop-up
+        MEM["ev-tom"].hidden = false; MEM["ev-tom"].isNew = true; MEM["ev-tom"].madeAt = Date.now();
+        if (screen && screen.rows) rerender();
+        const label = b.textContent; b.textContent = launch ? "Made, but hidden (launch version has no AI events)" : "Added quietly to memories"; setTimeout(() => (b.textContent = label), 2500);
+      }
+      if (s === "reset") { paired = false; store.set("paired", false); MOMENTS["m-tom-new"].hidden = true; MEM["ev-tom"].hidden = true; Object.keys(LSTATE).forEach((k) => (LSTATE[k] = null)); go("splash"); }
     }
-    if (e.target.closest(".review-toggle")) document.body.classList.add("panel-hidden"), document.body.classList.remove("panel-shown"), fit();
-    if (e.target.closest(".review-show")) document.body.classList.remove("panel-hidden"), document.body.classList.add("panel-shown"), fit();
+    if (e.target.closest(".review-toggle")) { document.body.classList.add("panel-hidden"); document.body.classList.remove("panel-shown"); fit(); }
+    if (e.target.closest(".review-show")) { document.body.classList.remove("panel-hidden"); document.body.classList.add("panel-shown"); fit(); }
   });
 
-  /* ---------------- Fit the 1920×1080 stage to the window ---------------- */
+  /* ================= Fit the 1920×1080 stage to the window ================= */
   function fit() {
     const vp = $(".viewport");
     requestAnimationFrame(() => {

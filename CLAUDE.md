@@ -10,6 +10,7 @@ The mobile app lives in a separate repo at `C:\Users\Htet\TeaTime (May)` (HTML/J
 - **Family PIN:** 6 digits, shown in two groups of three (e.g. `482 917`). Right PIN joins the family with no approval.
 - **TV states:** a TV that is off shows "Off · last seen", not "Waiting".
 - **Moments:** the first 3 uploads are free; locked moments start from the 4th, and the paywall on mobile unlocks them so they play on the TV.
+- **Memories:** auto-made clips are called "Memories" in both apps. They're made from all the family's photos, not per upload. Kinds: Person (named faces only), Event, Place, Timeline. A bulk upload stays one moment. New memories arrive quietly (no pop-up).
 - **Copy:** Australian English on every screen.
 - **Source of truth for visuals:** Figma file `Uk1zH52TS6WFucHkYVFKJY` (mobile onboarding); TV designs to be shared.
 

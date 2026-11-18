@@ -56,12 +56,47 @@ Built at the design's full frame size, **1920 × 1080** (Android TV 960 × 540 d
 - **On Home, browsing:** any arrow key cancels the countdown (the toast fades). We never pull someone away mid-browse. The moment is first in Recent with a New pill.
 - **In the viewer, ambient or setup screens:** no toast (no focus-stealing). The moment joins Recent with a New pill.
 
+## Memories (18 Nov, for review)
+Source: May's Figma section `14088:6734` "TV · Bulk upload & Stories" (T1–T4), the 17 Nov meeting notes ("TT onboarding", "TT onboarding flow walkthrough") and Ed's rail idea.
+
+**Agreed with May (18 Nov)**
+- The word on screen is **Memories** (TV and mobile). Not Stories or Collections.
+- Memories are made from **all of the family's photos**, not per upload. So a 1-photo upload can join "Lily's 6th birthday", and 100 photos work the same way. The memories from one upload still show inside that moment.
+- A **big moment** (Sarah's 100 photos) stays one card in Recent with a "100 photos" pill. OK opens it **month by month first** (May's T4), with **Play all** focused, so OK twice plays it.
+- A **new memory arrives quietly**: New pill, featured in D, no pop-up, no auto-play.
+
+**Kinds** (each card has a pink kind chip)
+| Kind | Made from | Needs AI | Example |
+|---|---|---|---|
+| Person | faces named by the family on their phones (unknown faces are never shown) | yes | Lily, Leo, "You, Lisa" |
+| Event | scenes: parties, outdoors | yes | Lily's 6th birthday, Christmas 2025 |
+| Place | photo GPS | no | A weekend in Daylesford |
+| Timeline | photo date | no | Six months with the Johnsons, October 2026, This time last year |
+
+**Card shapes**: tall = a moment someone sent · wide = a memory TeaTime made · circle = a person.
+
+**Four ways to show them — switch with "Memories design" in the review panel** (remembered per browser; `?concept=A–D` in the link)
+| | Home | Where the rest lives | Idle |
+|---|---|---|---|
+| **A · Rails on Home** | Recent, New memories, People, Events, Places, Timeline, then member rails | Everything is on Home | Moments slideshow |
+| **B · Memories space** | Recent + one "Memories" card, then member rails | Memories screen (`#memories`) with all the rails | Moments slideshow |
+| **C · Memory channels** | Recent + a "Memory channels" rail | Each channel plays non-stop; Left/Right changes channel (strip shows the channels either side) | Moments slideshow |
+| **D · Featured + one rail** (recommended) | Hero = newest memory with **Play memory** / **See all memories**; Recent; one Memories rail ending in "See all memories" | Memories screen | Memory channel |
+
+**Launch version** (review panel checkbox, `&launch=1`): no AI yet, so People and Events disappear everywhere. Only Places and Timeline remain, which is what can ship first (Ed).
+
+**Memory player** (`#play/<id>`): a title card (~3 s: kind, title, when, how many, who sent them) → photos with a slow pan and zoom, ~3.6 s each → **Up next** card (5 s countdown; OK plays now, Back stops). Top-left chip says the kind plus "Photo 3 of 7", or for a timeline "July 2026 · 1 of 1 this month", with one segment per month (May's T3). Left/Right = previous/next photo, OK = pause, Back = back to the card it came from. Controls fade after 4 s. Silent: no music (to discuss).
+
+**Hero preview**: when a memory card is focused, the background starts stepping through its photos after ~1.5 s, so the memory "plays a little" before you open it.
+
+**Still to decide**: which concept (A–D) · music · whether a new memory ever auto-plays · People naming flow on mobile · per-upload memories rail inside the moment (built) vs nothing.
+
 ## Leaving and coming back
 - The connected state is remembered in this browser, so a reload (or TV restart) goes Splash → Home.
 - Sign out asks first ("Sign out of Lisa's TV?", Cancel is focused). Signing out returns to Welcome; families stay on their phones and can reconnect with a new code.
 
 ## Not in this build
-- Options A and C (multi-family Home layouts) and the person screen are alternatives in Figma; not built yet.
+- Figma's multi-family Options A and C (one row per family / every member's row) and its person screen are not built. Don't confuse them with Memories designs A–D above.
 - Real pairing, real video playback and real uploads. The review panel simulates "Phone entered the code" and "New moment from Tom".
 
 ## Deviations from Figma (to confirm)
