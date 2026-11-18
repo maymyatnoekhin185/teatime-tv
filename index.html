@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1a1226">
+  <title>TeaTime TV</title>
+  <link rel="icon" href="assets/logo-emblem.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Rubik:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+  <!-- Review aid: jump to any screen, simulate the phone (not part of the TV UI) -->
+  <nav class="review" aria-label="Screens and scenarios">
+    <div class="review-head">
+      <p class="review-title">TeaTime TV · Option 1</p>
+      <button class="review-toggle" type="button" aria-label="Hide panel" title="Hide panel">‹</button>
+    </div>
+    <div class="review-body">
+      <p class="review-group">Set up</p>
+      <a href="#splash">1 · Splash</a>
+      <a href="#welcome">2 · Not connected</a>
+      <a href="#pair">3 · Pairing code</a>
+      <a href="#pin">4 · Family PIN</a>
+      <a href="#qr">4q · Scan a QR code</a>
+      <a href="#community">10 · Care community TV</a>
+      <p class="review-group">Watching</p>
+      <a href="#home">5 · Home</a>
+      <a href="#viewer/m-may">6 · Viewer, landscape photo</a>
+      <a href="#viewer/m-drawing">6p · Viewer, portrait photo</a>
+      <a href="#viewer/m-ed-video">6v · Viewer, video</a>
+      <a href="#ambient">8 · Ambient</a>
+      <a href="#thistv">9 · This TV</a>
+      <a href="#family/johnsons">9a · The Johnsons</a>
+      <p class="review-group">Simulate</p>
+      <button type="button" data-sim="paired">Phone entered the code</button>
+      <button type="button" data-sim="newmoment">New moment from Tom</button>
+      <button type="button" data-sim="reset">Reset (TV not connected)</button>
+      <p class="review-group">Remote</p>
+      <dl class="review-keys">
+        <dt>Arrows</dt><dd>D-pad</dd>
+        <dt>Enter</dt><dd>OK</dd>
+        <dt>Esc</dt><dd>Back</dd>
+        <dt>0–9</dt><dd>PIN digits</dd>
+      </dl>
+      <p class="review-note">Right PIN: 482 917</p>
+    </div>
+  </nav>
+  <button class="review-show" type="button" aria-label="Show panel" title="Show panel">›</button>
+
+  <main class="viewport">
+    <div class="stage" id="stage" role="application" aria-label="TeaTime TV, 1920 × 1080"></div>
+  </main>
+
+</body>
+</html>

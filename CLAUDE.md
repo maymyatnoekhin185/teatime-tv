@@ -15,6 +15,12 @@ The mobile app lives in a separate repo at `C:\Users\Htet\TeaTime (May)` (HTML/J
 
 When one of these changes here, change it in the mobile repo too (and the other way round).
 
+## Prototype
+- Plain HTML/CSS/JS, no build: `index.html`, `styles.css`, `app.js`, images in `assets/`. Spec and screen map in `UX.md`.
+- Run: `node dev-server.mjs 5174`, then open http://localhost:5174 (port 5173 is the mobile prototype).
+- Everything is drawn on a 1920 × 1080 stage (the Figma frame size) and scaled to fit the window. Use design px inside the stage.
+- Figma source: section `13283:30526` "TV UI Final".
+
 ## TV design notes
 - Designed for a 10-foot view: large type, high contrast, remote/D-pad focus states, no tiny touch targets.
 - Keep a `UX.md` here with the scenarios and screen map, as in the mobile repo.
