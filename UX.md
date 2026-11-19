@@ -6,7 +6,7 @@ Built at the design's full frame size, **1920 × 1080** (Android TV 960 × 540 d
 ## Who and where
 - **The viewer** is often a grandparent (e.g. Lisa) sitting across the room with a remote: D-pad, OK, Back. No keyboard, no touch, sometimes poor eyesight. The TV may be left on for hours.
 - **The family** set the TV up from their phones (mobile repo). Nothing is typed on the TV except, at most, a 4-digit code the family sends in a set-up message.
-- **Care home staff** set up room TVs from the TeaTime admin website.
+- **Care home staff** can help a resident type the 4-digit family code on a room TV (see "Care community TV"). There is no separate staff set-up any more.
 
 ## Layout rules (from Figma)
 - 96 px side / 56 px top-bottom safe margins; 12-column grid.
