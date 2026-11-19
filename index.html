@@ -17,44 +17,57 @@
   <!-- Review aid: jump to any screen, simulate the phone (not part of the TV UI) -->
   <nav class="review" aria-label="Screens and scenarios">
     <div class="review-head">
-      <p class="review-title">TeaTime TV · Option 1</p>
+      <p class="review-title">TeaTime TV · design review</p>
       <button class="review-toggle" type="button" aria-label="Hide panel" title="Hide panel">‹</button>
     </div>
     <div class="review-body">
+      <div class="review-option">
+        <label for="tvkind">This TV</label>
+        <select id="tvkind">
+          <option value="home">Lisa’s TV, at home</option>
+          <option value="care">Margaret’s TV, at a care home</option>
+        </select>
+      </div>
       <div class="review-option">
         <label for="concept">Memories design</label>
         <select id="concept">
           <option value="A">A · Rails on Home</option>
           <option value="B">B · Memories space</option>
-          <option value="C">C · Memory channels</option>
-          <option value="D">D · Featured + one rail</option>
+          <option value="C">C · Featured + one rail</option>
         </select>
         <p class="review-note" id="conceptNote"></p>
         <label class="review-check"><input type="checkbox" id="launch"> Launch version (no AI yet: no People or Events)</label>
+      </div>
+      <div class="review-option">
+        <label for="ctrlopt">Viewer controls</label>
+        <select id="ctrlopt">
+          <option value="1">1 · Bottom-left buttons</option>
+          <option value="2">2 · Arrows on the screen edges</option>
+        </select>
+        <p class="review-note" id="ctrlNote"></p>
       </div>
       <p class="review-group">Memories</p>
       <a href="#home">Home (with the chosen design)</a>
       <a href="#memories">All memories</a>
       <a href="#moment/m-bulk">Sarah’s 100 photos, opened</a>
-      <a href="#play/tl-six">Play a timeline memory</a>
+      <a href="#play/tl-six">Play a story memory</a>
       <a href="#play/ev-xmas">Play an event memory</a>
       <a href="#channel/all">Memory channel</a>
       <p class="review-group">Set up</p>
       <a href="#splash">1 · Splash</a>
-      <a href="#welcome">2 · Not connected</a>
-      <a href="#pair">3 · Pairing code</a>
-      <a href="#pin">4 · Family PIN</a>
-      <a href="#qr">4q · Scan a QR code</a>
-      <a href="#community">10 · Care community TV</a>
+      <a href="#connect">2 · Scan to send photos (QR)</a>
+      <a href="#code">3 · Got a code from family?</a>
       <p class="review-group">Watching</p>
       <a href="#viewer/m-may">6 · Viewer, landscape photo</a>
       <a href="#viewer/m-drawing">6p · Viewer, portrait photo</a>
       <a href="#viewer/m-ed-video">6v · Viewer, video</a>
+      <a href="#viewer/m-long-l">6L · Longest caption, landscape</a>
+      <a href="#viewer/m-long-p">6Lp · Longest caption, portrait</a>
       <a href="#ambient">8 · Ambient</a>
       <a href="#thistv">9 · This TV</a>
       <a href="#family/johnsons">9a · The Johnsons</a>
       <p class="review-group">Simulate</p>
-      <button type="button" data-sim="paired">Phone entered the code</button>
+      <button type="button" data-sim="paired">Phone scanned the QR</button>
       <button type="button" data-sim="newmoment">New moment from Tom</button>
       <button type="button" data-sim="newmemory">AI made a new memory</button>
       <button type="button" data-sim="reset">Reset (TV not connected)</button>

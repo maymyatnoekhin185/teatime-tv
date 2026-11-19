@@ -19,14 +19,23 @@
     mai: { name: "Mai", avatar: A("avatar-sarah.jpg") },
     henry: { name: "Henry", avatar: A("avatar-ed.jpg") },
     grace: { name: "Grace", avatar: A("avatar-grace.jpg") },
+    // Care home staff who post for residents (care community TV only)
+    activities: { name: "Activities team", avatar: A("avatar-community.svg") },
+    priya: { name: "Nurse Priya", avatar: A("avatar-grace.jpg") },
   };
   const FAMILIES = [
     { id: "johnsons", name: "The Johnsons", since: "12 March 2026", moments: 35, members: [["sarah", 14, true], ["ed", 9], ["may", 9], ["tom", 3]] },
     { id: "nguyens", name: "The Nguyens", since: "2 May 2026", moments: 17, members: [["linh", 9, true], ["nam", 5], ["mai", 3]] },
     { id: "wilsons", name: "The Wilsons", since: "20 July 2026", moments: 19, members: [["henry", 12, true], ["grace", 7]] },
   ];
-  const TV = { name: "Lisa’s TV", owner: A("avatar-lisa.png"), since: "March 2026" };
-  const PIN_OK = "482917";
+  // Two kinds of TV (review panel → "This TV"). A care community TV is just a TV whose family is a care family:
+  // the family was made for a resident on the phone (E6/E7) and linked to the care home, so the care home's posts play here too.
+  const TVS = {
+    home: { kind: "home", name: "Lisa’s TV", owner: A("avatar-lisa.png"), since: "March 2026" },
+    care: { kind: "care", name: "Margaret’s TV", owner: A("avatar-margaret.svg"), since: "17 November 2026", resident: "Margaret", room: "Room 12 · Lakeside wing", community: "Cheltenham Manor" },
+  };
+  let TV = TVS.home;
+  const isCare = () => TV.kind === "care";
 
   // The family's photo library: when each was taken (photo date), where, and who is in it (named on the phones).
   const PH = {
@@ -59,10 +68,20 @@
     "ev-tom": { kind: "event", label: "Event", ai: true, title: "Tom’s prize day", when: "17 Nov 2026", photos: ["tom-grad", "dinner"], from: ["tom", "ed"], isNew: true, hidden: true },
     "pl-daylesford": { kind: "place", label: "Place", title: "A weekend in Daylesford", when: "May 2026", photos: ["autumn-dog", "kids-path"], from: ["sarah"], isNew: true },
     "pl-torquay": { kind: "place", label: "Place", title: "Torquay", when: "Dec 2025 and Jul 2026", photos: ["xmas-beach", "beach"], from: ["ed", "sarah"] },
-    "tl-six": { kind: "timeline", label: "Timeline", title: "Six months with the Johnsons", when: "May – Oct 2026", photos: ["autumn-dog", "kids-path", "newborn", "sofa-dog", "beach", "drawing", "dinner", "birthday"], from: ["sarah"], isNew: true, chapters: true },
-    "tl-oct": { kind: "timeline", label: "Month", title: "October 2026", when: "October 2026", photos: ["dinner", "birthday"], from: ["ed", "sarah"] },
+    // "Looking back" (date-only memories), in rail order: A year ago first, then the Story, then one Month card per finished month (added below).
     "tl-xmas": { kind: "timeline", label: "A year ago", title: "This time last year", when: "December 2025", photos: ["xmas-tree", "xmas-baking", "xmas-presents", "xmas-beach"], from: ["sarah", "ed"] },
+    "tl-six": { kind: "timeline", label: "Story", title: "Six months with the Johnsons", when: "May – Oct 2026", photos: ["autumn-dog", "kids-path", "newborn", "sofa-dog", "beach", "drawing", "dinner", "birthday"], from: ["sarah"], isNew: true, chapters: true },
   };
+  // A Month memory for every finished month with 2+ photos, newest first. The current month (November 2026) gets one once it ends; quiet months are skipped.
+  const THIS_MONTH = "2026-11", MONTH_FROM = { "2026-10": ["ed", "sarah"], "2025-12": ["sarah", "ed"] };
+  [...new Set(Object.values(PH).map((p) => p.m))].filter((m) => m < THIS_MONTH).sort().reverse().forEach((m) => {
+    const photos = Object.keys(PH).filter((id) => PH[id].m === m);
+    if (photos.length < 2) return;
+    MEM["tl-" + m] = { kind: "timeline", label: "Month", title: monthLabel(m), when: monthLabel(m), photos, from: MONTH_FROM[m] || ["sarah"] };
+  });
+  // When the date is already the title (Month cards), don't repeat it underneath.
+  const whenOf = (m) => (m.when === m.title ? "" : m.when);
+  const memSub = (m) => [whenOf(m), m.photos.length + " photos", !whenOf(m) && m.from.length ? "from " + names(m.from) : ""].filter(Boolean);
   // One person memory for everyone named on the phones who is in 2+ photos.
   ["lily", "leo", "mia", "sarah", "ed", "tom", "lisa"].forEach((p) => {
     const photos = Object.keys(PH).filter((id) => PH[id].people.includes(p));
@@ -88,6 +107,30 @@
     "m-may-sofa": { by: "may", date: "4 Oct 2026", caption: "Rosie has claimed the couch again.", items: [P("photo-sofa-dog.jpg")] },
     "m-newborn": { by: "sarah", date: "18 Sep 2026", caption: "Quiet morning with the little one.", items: [P("photo-sarah-3.jpg", "p")] },
     "m-tom-new": { by: "tom", date: "Today", caption: "Got the science prize at school today!", items: [P("photo-tom-grad.jpg", "p")], isNew: true, hidden: true },
+    // Longest captions allowed on the phone (250 characters): one landscape, one portrait.
+    "m-long-l": { by: "may", date: "15 Nov 2026", caption: "Mum, we finally made it back to the little beach near Anglesea where you used to take us every summer. The kids built a sandcastle with a moat, Ed fell asleep under the umbrella, and we all agreed the fish and chips are still the best on the coast!", items: [P("photo-beach.jpg"), P("xmas-beach.jpg")] },
+    "m-long-p": { by: "sarah", date: "13 Nov 2026", caption: "Found this one from Christmas and it made me cry a little. Lily still talks about that big hug every time we drive past your street. She asked if we can visit again before the holidays, so of course I said yes. Love you heaps, see you very soon.", items: [P("xmas-nan-hug.jpg", "p")] },
+    "m-tom-video": { by: "tom", date: "2 Nov 2026", caption: "Biscuit learning to fetch (sort of).", items: [{ type: "video", src: A("photo-autumn-dog.jpg"), o: "l", dur: 42 }] },
+    "m-may-video": { by: "may", date: "19 Oct 2026", caption: "Mia’s first go on the big slide!", items: [{ type: "video", src: A("photo-kids-path.jpg"), o: "l", dur: 35 }] },
+    // Last Christmas: older moments, further back than Recent.
+    "m-xmas-tree": { by: "sarah", date: "20 Dec 2025", caption: "Tree’s up! Lily put the star on (with a little help).", items: [P("xmas-tree.jpg"), P("xmas-star.jpg", "p")] },
+    "m-xmas-baking": { by: "may", date: "22 Dec 2025", caption: "The gingerbread production line is open.", items: [P("xmas-baking.jpg")] },
+    "m-xmas-day": { by: "ed", date: "25 Dec 2025", caption: "Christmas lunch at Mum’s — what a feast.", items: [P("xmas-dinner.jpg"), P("xmas-presents.jpg"), P("xmas-nan-hug.jpg", "p")] },
+    "m-xmas-video": { by: "ed", date: "25 Dec 2025", caption: "Leo opening the big present. Worth the wait!", items: [{ type: "video", src: A("xmas-presents.jpg"), o: "l", dur: 58 }] },
+    "m-boxing": { by: "tom", date: "26 Dec 2025", caption: "Boxing Day swim at Torquay — freezing!", items: [P("xmas-beach.jpg")] },
+    // Cheltenham Manor's posts for Margaret (care community TV only; placeholder photos repeat).
+    "c-concert": { fam: "community", by: "activities", date: "17 Nov 2026", caption: "Margaret enjoyed the garden concert this afternoon — a lovely sing-along!", items: [P("photo-ed-1.jpg")], isNew: true },
+    "c-scones": { fam: "community", by: "activities", date: "14 Nov 2026", caption: "Scone morning in the Lakeside kitchen. Margaret was in charge of the jam!", items: [P("xmas-baking.jpg")] },
+    "c-dog": { fam: "community", by: "priya", date: "11 Nov 2026", caption: "Biscuit the therapy dog came to visit. Margaret didn’t want to let him go.", items: [P("photo-sofa-dog.jpg")] },
+    "c-music": { fam: "community", by: "activities", date: "6 Nov 2026", caption: "Music afternoon in the lounge — Margaret led the singing.", items: [{ type: "video", src: A("xmas-dinner.jpg"), o: "l", dur: 48 }] },
+    // The other two families on this TV (placeholder photos repeat).
+    "m-linh-1": { fam: "nguyens", by: "linh", date: "16 Nov 2026", caption: "Bánh xèo night — the kids flipped their own!", items: [P("xmas-dinner.jpg"), P("xmas-baking.jpg")] },
+    "m-nam-1": { fam: "nguyens", by: "nam", date: "8 Nov 2026", caption: "Morning walk before the rain came in.", items: [P("photo-kids-path.jpg")] },
+    "m-mai-video": { fam: "nguyens", by: "mai", date: "1 Nov 2026", caption: "Bà, this song is for you!", items: [{ type: "video", src: A("photo-drawing.jpg"), o: "l", dur: 64 }] },
+    "m-linh-2": { fam: "nguyens", by: "linh", date: "20 Oct 2026", caption: "Mai’s first day at big school.", items: [P("photo-sarah-3.jpg", "p")] },
+    "m-henry-1": { fam: "wilsons", by: "henry", date: "14 Nov 2026", caption: "Back on the boat for the first time since winter.", items: [P("photo-beach.jpg"), P("xmas-beach.jpg")] },
+    "m-grace-1": { fam: "wilsons", by: "grace", date: "3 Nov 2026", caption: "The garden is finally blooming.", items: [P("photo-autumn-dog.jpg")] },
+    "m-henry-video": { fam: "wilsons", by: "henry", date: "24 Oct 2026", caption: "Grandpa’s famous card trick, filmed at last.", items: [{ type: "video", src: A("photo-ed-1.jpg"), o: "l", dur: 51 }] },
   };
   // Sarah's 100 photos, May – Oct 2026 (placeholder photos repeat). Grouped by month for the opened view.
   const BULK_MONTHS = [["2026-10", 18], ["2026-09", 21], ["2026-08", 17], ["2026-07", 16], ["2026-06", 14], ["2026-05", 14]];
@@ -102,7 +145,9 @@
       }
     });
   })();
-  const FAMILY_OF = () => "The Johnsons";
+  // On Margaret's TV the Johnsons are "Margaret's family" (the phone names a care family after the resident).
+  const famName = (fam) => (isCare() && fam.id === "johnsons" ? "Margaret’s family" : fam.name);
+  const FAMILY_OF = (m) => (m && m.fam === "community" ? TV.community : famName(FAMILIES.find((f) => f.id === ((m && m.fam) || "johnsons")) || FAMILIES[0]));
   const thumbOf = (m) => m.thumb || m.items[0].src;
   const countLabel = (m) => (m.items[0].type === "video" ? "Video" : m.items.length === 1 ? "1 photo" : m.items.length + " photos");
 
@@ -111,10 +156,17 @@
     get(k, d) { try { const v = localStorage.getItem("teatime.tv." + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem("teatime.tv." + k, JSON.stringify(v)); } catch (e) {} },
   };
-  const CONCEPTS = { A: "Rails on Home", B: "Memories space", C: "Memory channels", D: "Featured + one rail" };
+  const CONCEPTS = { A: "Rails on Home", B: "Memories space", C: "Featured + one rail" };
   const q = new URLSearchParams(location.search);
-  let concept = /^[ABCD]$/.test(q.get("concept") || "") ? q.get("concept") : store.get("concept", "D");
+  // 19 Nov: the old C (channels on Home) was dropped and its channels became a rail; the old D (Featured + one rail) is now C.
+  let concept = q.get("concept") || store.get("concept", "C");
+  if (concept === "D") concept = "C";
+  if (!CONCEPTS[concept]) concept = "C";
   let launch = q.has("launch") ? q.get("launch") === "1" : store.get("launch", false); // launch = no AI yet: no People, no Events
+  // Viewer controls: 1 = bottom-left buttons · 2 = arrows on the screen edges (option 3, arrows beside a portrait photo, dropped 19 Nov)
+  let ctrlOpt = String(q.get("ctrls") || store.get("ctrls", "1"));
+  if (ctrlOpt !== "1" && ctrlOpt !== "2") ctrlOpt = ctrlOpt === "3" ? "2" : "1";
+  TV = TVS[q.get("tv") === "care" || (!q.has("tv") && store.get("tv", "home") === "care") ? "care" : "home"];
   const visibleMem = (id) => MEM[id] && !MEM[id].hidden && (!launch || !MEM[id].ai);
   const memIds = (kind) => Object.keys(MEM).filter((id) => visibleMem(id) && (!kind || MEM[id].kind === kind));
   const newestMems = () => memIds().sort((a, b) => (MEM[b].madeAt || 0) - (MEM[a].madeAt || 0) || (MEM[b].isNew ? 1 : 0) - (MEM[a].isNew ? 1 : 0));
@@ -204,57 +256,29 @@
 
   S.splash = {
     html: () => '<div class="scr">' + glows + '<div class="splash-brand"><img src="' + A("logo-emblem.svg") + '" alt=""><div><div class="name">TeaTime</div><div class="tag">Your family is waiting</div></div></div></div>',
-    mount() { this.t = setTimeout(() => go(paired ? "home" : "welcome", true), 2200); },
+    mount() { this.t = setTimeout(() => go(paired ? "home" : "connect", true), 2200); },
     unmount() { clearTimeout(this.t); },
     key: () => true,
   };
 
-  S.welcome = {
+  // First screen when this TV isn't connected. Scanning with any phone camera opens TeaTime (or the app store), signs in,
+  // and goes to "Name your family" (or picks the family) — then this TV is connected. Nothing to type on the TV.
+  S.connect = {
     html: () =>
-      '<div class="scr">' + glows +
-      '<div class="photo-wash" style="left:600px;width:1320px;background-image:url(' + A("photo-kids-path.jpg") + ');background-size:auto 100%;background-position:241px 0"></div>' +
-      '<div class="abs" style="left:654px;top:0;width:1176px;height:1080px;background:linear-gradient(88.27deg,#1a1226 4.8%,#1a1226 23%,rgba(26,18,38,.4) 50.3%,rgba(26,18,38,0) 87.6%)"></div>' +
-      '<div class="wash-bottom"></div>' + topbarCompact +
-      '<div class="setup-copy" style="width:1064px;gap:56px">' +
-      '<div><div class="t-hero" style="width:900px">Bring your <span class="pink">family’s moments</span> to this TV</div>' +
-      '<p class="t-body muted" style="font-size:36px;line-height:44px;margin:28px 0 0">Photos and videos from the people you love, playing here by themselves. Set it up once from the TeaTime app on a phone — nothing to type on the TV.</p></div>' +
-      '<div><span class="btn primary" data-f data-act="start" id="first">Get started</span></div></div></div>',
-    act(a) { if (a === "start") go("pair"); },
-    key(k) { return k === "back"; },
+      '<div class="scr">' + glows + topbarCompact +
+      '<div class="qr-card connect-qr"><img src="' + A("qr-card.svg") + '" alt="QR code to connect this TV"></div>' +
+      '<div class="setup-copy" style="width:1000px;gap:56px">' +
+      '<div><div class="t-hero" style="width:860px">Scan to send photos to this TV</div>' +
+      '<p class="t-body muted" style="font-size:36px;line-height:44px;margin:28px 0 0">Point your phone camera at the code.</p></div>' +
+      '<div><span class="btn" data-f data-act="code" id="first">Got a code from family?</span></div></div></div>',
+    act(a) { if (a === "code") go("code"); },
+    key(k) { return k === "back"; }, // first screen: Back does nothing
   };
 
-  const codeHtml = (code, cls) => '<div class="code ' + (cls || "") + '">' + code.split("").map((d) => '<div class="digit">' + d + "</div>").join("") + "</div>";
-  const newCode = () => String(1000 + Math.floor(Math.random() * 9000));
-
-  S.pair = {
-    html() {
-      this.code = this.code || "4829";
-      return '<div class="scr">' + glows +
-        '<div class="photo-wash" style="left:723px;width:1197px;background-image:url(' + A("photo-kids-path.jpg") + ');background-size:1961px auto;background-position:0 center"></div>' +
-        '<div class="abs" style="left:600px;top:0;width:1320px;height:1080px;background:linear-gradient(89deg,#1a1226 2.3%,#1a1226 20%,rgba(26,18,38,.35) 46.7%,rgba(26,18,38,0) 83%)"></div>' +
-        '<div class="wash-bottom"></div>' + topbarCompact +
-        '<div class="setup-copy" style="width:1076px;gap:126px"><div style="display:flex;flex-direction:column;gap:64px">' +
-        '<div style="display:flex;flex-direction:column;gap:32px"><div class="t-headline">Enter this code in the TeaTime app on your phone</div>' +
-        '<div id="code">' + codeHtml(this.code) + "</div>" +
-        '<div class="t-small muted-2 sep">The code belongs to this TV only' + DOT + 'It refreshes every <span id="mins">10 minutes</span></div></div>' +
-        steps(["Open TeaTime on the phone", "Tap  Set up the TV", "Type the code  →  this TV joins the family"]) +
-        '</div><div><span class="btn" data-f data-act="other" id="first">' + chev + "Other ways to connect</span></div></div></div>";
-    },
-    mount() {
-      this.left = 600;
-      this.t = setInterval(() => {
-        this.left -= 1;
-        const m = $("#mins", stage), mins = Math.ceil(this.left / 60);
-        if (m) m.textContent = mins + (mins === 1 ? " minute" : " minutes");
-        if (this.left <= 0) { this.left = 600; this.code = newCode(); $("#code", stage).innerHTML = codeHtml(this.code, "refresh"); }
-      }, 1000);
-    },
-    unmount() { clearInterval(this.t); },
-    act(a) { if (a === "other") go("pin"); },
-    key(k) { if (k === "back") { go("welcome"); return true; } },
-  };
-
-  S.pin = {
+  // "Got a code from family?": when the family isn't in front of this TV, the phone sends a set-up message with a 4-digit
+  // PIN for the TV (Figma flow B5 → B6). Typing it here connects this TV to that family. The 4th digit checks it — no Submit to find.
+  const CODE_OK = "2580", CODE_LEN = 4;
+  S.code = {
     digits: "",
     html() {
       const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "✓"];
@@ -263,76 +287,47 @@
         '<div class="abs" style="left:600px;top:0;width:1320px;height:1080px;background:linear-gradient(90deg,#1a1226 0%,rgba(26,18,38,.95) 22%,rgba(26,18,38,.35) 55%,rgba(26,18,38,0) 100%)"></div>' +
         '<div class="wash-bottom"></div>' + topbarCompact +
         '<div class="setup-copy" style="width:1920px;gap:56px;padding-bottom:60px"><div style="display:flex;flex-direction:column;gap:40px">' +
-        '<div><div class="t-title">Connect with a family PIN</div><p class="t-body muted" style="width:900px;margin:24px 0 0">Ask the family’s admin to open TeaTime → Families → Add a TV, and read you the 6-digit PIN. Joins one family at a time.</p></div>' +
+        '<div><div class="t-title">Enter the code from your family</div><p class="t-body muted" style="width:900px;margin:24px 0 0;line-height:44px">It’s in the set-up message your family sent from the TeaTime app. At a care home, staff can help type it in.</p></div>' +
         '<div style="display:flex;flex-direction:column;gap:16px"><div class="pin-boxes" id="boxes"></div><div class="pin-msg" id="pinmsg"></div>' +
         '<div class="keypad">' + keys.map((k) => '<div class="key" data-f data-act="key" data-k="' + k + '"' + (k === "5" ? ' id="first"' : "") + ">" + k + "</div>").join("") + "</div></div></div>" +
-        '<div class="btn-row"><span class="btn" data-f data-act="back">' + chev + 'Back</span><span class="btn primary" data-f data-act="submit" id="submit">Submit</span><span class="btn" data-f data-act="qr">' + chev + "Scan a QR code instead</span></div></div></div>";
+        '<div class="btn-row"><span class="btn" data-f data-act="back">' + chev + "Back to the QR code</span></div></div></div>";
     },
     mount() { this.digits = ""; this.error = false; this.paint(); },
     paint(msg, isErr) {
       const b = $("#boxes", stage); if (!b) return;
       let h = "";
-      for (let i = 0; i < 6; i++) {
-        if (i === 3) h += '<div class="gap"></div>';
+      for (let i = 0; i < CODE_LEN; i++) {
         const d = this.digits[i];
         h += '<div class="pin-box' + (i === this.digits.length && !this.error ? " is-next" : "") + '">' + (d ? d : '<span class="dot"></span>') + "</div>";
       }
       b.innerHTML = h;
       b.classList.toggle("is-error", !!isErr);
       const m = $("#pinmsg", stage); m.textContent = msg || ""; m.classList.toggle("is-error", !!isErr);
-      $("#submit", stage).classList.toggle("is-dim", this.digits.length < 6);
     },
     type(k) {
       if (k === "⌫") { this.digits = this.digits.slice(0, -1); this.error = false; this.paint(); return; }
       if (k === "✓") return this.submit();
       if (this.error) { this.digits = ""; this.error = false; }
-      if (this.digits.length < 6) this.digits += k;
+      if (this.digits.length < CODE_LEN) this.digits += k;
       this.paint();
+      if (this.digits.length === CODE_LEN) { clearTimeout(this.chk); this.chk = setTimeout(() => this.submit(), 350); } // a beat to see the 4th digit land
     },
     submit() {
-      if (this.digits.length < 6) return this.paint("Enter all 6 digits", false);
-      if (this.digits === PIN_OK) { connect("Connected to The Johnsons"); return; }
+      if (this.digits.length < CODE_LEN) return this.paint("Enter all 4 digits", false);
+      if (this.digits === CODE_OK) { connect("Connected to The Johnsons"); return; }
       this.error = true;
-      this.paint("That PIN doesn’t match a family. Check it with the family’s admin.", true);
+      this.paint("That code didn’t work. Check the message, or ask your family to send a new one.", true);
     },
+    unmount() { clearTimeout(this.chk); },
     act(a, el) {
       if (a === "key") this.type(el.dataset.k);
-      else if (a === "submit") this.submit();
-      else if (a === "back") go("pair");
-      else if (a === "qr") go("qr");
+      else if (a === "back") go("connect");
     },
     key(k) {
       if (/^\d$/.test(k)) { const el = $('[data-k="' + k + '"]', stage); setFocus(el); press(el); return true; }
-      if (k === "delete") { if (this.digits.length) { this.type("⌫"); return true; } go("pair"); return true; }
-      if (k === "back") { go("pair"); return true; }
+      if (k === "delete") { if (this.digits.length) { this.type("⌫"); return true; } go("connect"); return true; }
+      if (k === "back") { go("connect"); return true; }
     },
-  };
-
-  S.qr = {
-    html: () =>
-      '<div class="scr">' + glows + topbarCompact +
-      '<div class="qr-card"><img src="' + A("qr-card.svg") + '" alt="QR code to connect this TV"></div>' +
-      '<div class="setup-copy" style="width:996px;gap:80px"><div style="display:flex;flex-direction:column;gap:64px">' +
-      '<div><div class="t-title">Scan to connect</div><p class="t-body muted" style="width:860px;margin:40px 0 0">Open TeaTime on your phone and scan this code. Every family on that phone joins this TV at once.</p></div>' +
-      steps(["Open TeaTime on your phone", "Families  →  Scan a TV code", "Point the camera at this screen"]) +
-      '</div><div class="btn-row"><span class="btn" data-f data-act="back" id="first">' + chev + 'Back</span><span class="btn" data-f data-act="pin">' + chev + "Use a family PIN instead</span></div></div></div>",
-    act(a) { if (a === "back") go("pair"); if (a === "pin") go("pin"); },
-    key(k) { if (k === "back") { go("pair"); return true; } },
-  };
-
-  S.community = {
-    html: () =>
-      '<div class="scr"><div class="abs" style="left:780px;top:80px;width:2240px;height:2240px;background:radial-gradient(closest-side,rgba(228,26,104,.08),rgba(228,26,104,0))"></div>' +
-      '<div class="photo-wash" style="left:839px;width:1081px;background-image:url(' + A("photo-birthday.jpg") + ');background-size:auto 100%;background-position:-427px 0"></div>' +
-      '<div class="abs" style="left:685px;top:0;width:1292px;height:1080px;background:linear-gradient(90deg,#1a1226 0%,rgba(26,18,38,.95) 22%,rgba(26,18,38,.35) 55%,rgba(26,18,38,0) 100%)"></div>' +
-      '<div class="wash-bottom"></div>' + topbar(true, false) +
-      '<div class="abs" style="left:0;top:196px;width:1068px;padding:0 80px;display:flex;flex-direction:column;gap:40px">' +
-      '<div style="display:flex;flex-direction:column;gap:24px"><div><span class="pill-glass">Care community TV</span></div><div class="t-headline">Care home staff: enter this code on the TeaTime admin website</div></div>' +
-      '<div style="display:flex;flex-direction:column;gap:24px">' + codeHtml("7305") + '<div class="t-small muted-2">This is a room TV — staff choose the resident it belongs to  ·  The code refreshes every 10 minutes</div></div>' +
-      '<div style="margin-top:24px">' + steps(["Open the TeaTime admin website", "Choose the resident and their room", "Type the code  →  this TV joins their community"]) + "</div>" +
-      '<div><span class="btn" data-f data-act="other" id="first">' + chev + "Other ways to connect</span></div></div></div>",
-    act(a) { if (a === "other") go("pair"); },
-    key(k) { if (k === "back") { go("pair"); return true; } },
   };
 
   /* ================= Rails (immersive list) — shared by Home, Memories and the opened 100-photo moment ================= */
@@ -356,7 +351,7 @@
       return '<div class="mcard' + (ch ? " is-channel" : "") + '"' + at + ' style="background-image:url(' + phSrc(m.photos[0]) + ')"><div class="scrim"></div>' +
         '<div class="mtags">' + (ch ? '<span class="kind kind-channel"><i class="live"></i>Channel</span>' : kindChip(m)) + (m.isNew && !ch ? '<span class="pill-new static">New</span>' : "") + "</div>" +
         '<div class="badge-video"><img src="' + A("icon-play.svg") + '" alt=""></div>' +
-        '<div class="cap"><b>' + m.title + "</b><span>" + (ch ? "Plays non-stop" : m.when + " · " + m.photos.length + " photos") + "</span></div></div>";
+        '<div class="cap"><b>' + m.title + "</b><span>" + (ch ? "Plays non-stop" : memSub(m).slice(0, 2).join(" · ")) + "</span></div></div>";
     }
     if (it.t === "channelAll") {
       return '<div class="mcard is-channel"' + at + ' style="background-image:url(' + phSrc("xmas-beach") + ')"><div class="scrim"></div>' +
@@ -381,37 +376,51 @@
   }
 
   // What the hero (top-left copy + full background) shows for the focused item.
+  // Four lines, each with one job (big to small): eyebrow (status · kind, small text, no pills) → title → one line of facts → the caption or a short description.
+  // Nothing is said twice (e.g. "from Sarah and Ed" lives only in the facts line).
+  const NEWTAG = (t) => '<b class="new">' + t + "</b>";
+  const LIVE = '<i class="live"></i>Channel';
+  const eyebrow = (...parts) => parts.filter(Boolean).join('<span class="dot">·</span>');
   function heroFor(it) {
+    if (it.t === "moment" && MOMENTS[it.id].fam === "community") {
+      const m = MOMENTS[it.id];
+      return { bg: [m.items[0].src], portrait: m.items[0].o === "p", eyebrow: eyebrow(m.isNew ? NEWTAG("New") : "", "Care community"),
+        who: '<img src="' + A("avatar-community.svg") + '" alt=""><span class="hero-title">' + TV.community + "</span>",
+        meta: PEOPLE[m.by].name + DOT + countLabel(m) + DOT + m.date, quote: "“" + m.caption + "”", caption: true, dots: Math.min(5, m.items.length) };
+    }
     if (it.t === "moment") {
       const m = MOMENTS[it.id], who = PEOPLE[m.by];
       return { bg: [m.items[0].type === "video" ? thumbOf(m) : m.items[0].src], portrait: m.items[0].o === "p",
-        who: '<img src="' + who.avatar + '" alt=""><span class="t-title">' + who.name + "</span>",
-        meta: FAMILY_OF() + DOT + (m.bulk ? m.items.length + " photos" + DOT + m.range : countLabel(m) + DOT + m.date), quote: "“" + m.caption + "”", dots: Math.min(5, m.items.length) };
+        eyebrow: m.isNew ? NEWTAG(m.bulk ? "New · big upload" : "New") : "",
+        who: '<img src="' + who.avatar + '" alt=""><span class="hero-title">' + who.name + "</span>",
+        meta: FAMILY_OF(m) + DOT + (m.bulk ? m.items.length + " photos" + DOT + m.range : countLabel(m) + DOT + m.date), quote: "“" + m.caption + "”", caption: true, dots: Math.min(5, m.items.length) };
     }
     if (it.t === "memory" || it.t === "channel" || it.t === "featured") {
-      const m = MEM[it.id];
-      const desc = it.t === "channel" ? "Plays by itself, one memory after another. Left and right change channel." :
-        m.kind === "person" ? "Every photo with " + (PEOPLE[m.person].you ? "you" : PEOPLE[m.person].name) + ", from everyone in the family." :
-        "Made by TeaTime from photos " + names(m.from) + " sent.";
+      const m = MEM[it.id], ch = it.t === "channel";
       return { bg: m.photos.map(phSrc), portrait: PH[m.photos[0]].o === "p", preview: true,
-        who: (it.t === "featured" ? '<span class="kicker">' + (m.isNew ? "New memory" : "A memory for you") + "</span>" : "") + (it.t === "channel" ? '<span class="kind kind-channel big"><i class="live"></i>Channel</span>' : '<span class="kind kind-' + m.kind + ' big">' + m.label + "</span>") + '<span class="t-title">' + m.title + "</span>",
-        meta: m.when + DOT + m.photos.length + " photos" + (m.from.length ? DOT + "from " + names(m.from) : ""), quote: desc };
+        eyebrow: ch ? LIVE : eyebrow(m.isNew ? NEWTAG("New memory") : it.t === "featured" ? "A memory for you" : "", m.label),
+        who: '<span class="hero-title">' + m.title + "</span>",
+        meta: [whenOf(m), m.photos.length + " photos", m.from.length ? "from " + names(m.from) : ""].filter(Boolean).join(DOT),
+        quote: ch ? "Plays by itself, one memory after another. Left and right change channel." : m.kind === "person" ? "Every photo with " + (PEOPLE[m.person].you ? "you" : PEOPLE[m.person].name) + ", from everyone in the family." : m.chapters ? "Told month by month." : "" };
     }
-    if (it.t === "channelAll") return { bg: Object.keys(PH).reverse().map(phSrc), preview: true, who: '<span class="kind kind-channel big"><i class="live"></i>Channel</span><span class="t-title">Everything, newest first</span>', meta: "Every photo the family has sent", quote: "Plays by itself. Left and right change channel." };
+    if (it.t === "channelAll") return { bg: Object.keys(PH).reverse().map(phSrc), preview: true, eyebrow: LIVE, who: '<span class="hero-title">Everything, newest first</span>', meta: "Every photo the family has sent", quote: "Plays by itself. Left and right change channel." };
     if (it.t === "person") {
       const m = MEM[it.id], p = PEOPLE[m.person];
-      return { bg: m.photos.map(phSrc), preview: true, who: '<span class="face sm" style="' + faceStyle(m.person) + '"></span><span class="t-title">' + m.title + "</span>",
-        meta: m.photos.length + " photos" + DOT + "named by the family on their phones", quote: "Every photo with " + (p.you ? "you" : p.name) + ", from everyone in the family." };
+      return { bg: m.photos.map(phSrc), preview: true, eyebrow: "Person",
+        who: '<span class="face sm" style="' + faceStyle(m.person) + '"></span><span class="hero-title">' + m.title + "</span>",
+        meta: m.photos.length + " photos" + DOT + m.when, quote: "Every photo with " + (p.you ? "you" : p.name) + ", from everyone in the family." };
     }
     if (it.t === "door") {
-      const ids = newestMems();
-      return { bg: ids.slice(0, 5).map((id) => phSrc(MEM[id].photos[0])), preview: true, who: '<span class="t-title">' + (it.label || "All memories") + "</span>",
-        meta: ids.length + " memories" + DOT + ids.filter((id) => MEM[id].isNew).length + " new", quote: launch ? "Places and months, made by TeaTime from your family’s photos." : "People, events, places and months — made by TeaTime from your family’s photos." };
+      const ids = newestMems(), n = ids.filter((id) => MEM[id].isNew).length;
+      return { bg: ids.slice(0, 5).map((id) => phSrc(MEM[id].photos[0])), preview: true, eyebrow: n ? NEWTAG(n + " new") : "",
+        who: '<span class="hero-title">' + (it.label || "All memories") + "</span>",
+        meta: ids.length + " memories", quote: launch ? "Places and months, made by TeaTime from your family’s photos." : "People, events, places and months — made by TeaTime from your family’s photos." };
     }
     if (it.t === "photo" || it.t === "bulkhead") {
       const m = MOMENTS["m-bulk"], ph = m.items[it.idx || 0];
-      return { bg: [ph.src], portrait: ph.o === "p", who: '<img src="' + PEOPLE.sarah.avatar + '" alt=""><span class="t-title">Sarah</span>',
-        meta: m.items.length + " photos" + DOT + m.range + DOT + "newest month first", quote: it.t === "photo" ? "Photo " + (it.idx + 1) + " of " + m.items.length + DOT + ph.date : "“" + m.caption + "”" };
+      return { bg: [ph.src], portrait: ph.o === "p", eyebrow: it.t === "photo" ? "Photo " + (it.idx + 1) + " of " + m.items.length : "",
+        who: '<img src="' + PEOPLE.sarah.avatar + '" alt=""><span class="hero-title">Sarah</span>',
+        meta: FAMILY_OF(m) + DOT + (it.t === "photo" ? ph.date : m.items.length + " photos" + DOT + m.range), quote: "“" + m.caption + "”", caption: true };
     }
     return { bg: [], who: "", meta: "", quote: "" };
   }
@@ -437,7 +446,10 @@
           '<div class="fade-left"></div><div class="fade-bottom"></div><div class="fade-top"></div>' + topbar(true, !!cfg.chip) +
           (cfg.crumb ? '<div class="crumb">' + cfg.crumb + "</div>" : "") +
           '<div class="home-hero' + (hasBtns ? " with-btns" : "") + '"><div class="hero-copy" id="heroCopy"></div><div class="dots" id="heroDots"></div></div>' + btnHtml +
-          '<div class="rows" id="rows" style="top:' + this.base + 'px">' + rowsHtml + "</div></div>";
+          '<div class="rows" id="rows" style="top:' + this.base + 'px">' + rowsHtml + "</div>" +
+          // Row map: shows where you are in the list; click a dot to jump there.
+          (this.rows.length > 2 ? '<div class="row-map" id="rowMap">' + this.rows.map((r, ri) => '<i data-jump="' + ri + '"><b>' + (r.type === "buttons" ? r.items[0].label : r.title) + "</b></i>").join("") + "</div>" : "") +
+          "</div>";
       },
       mount() {
         const st = lstate(key);
@@ -486,7 +498,9 @@
           tiles.style.transform = "translateX(" + -off + "px)";
         });
         if (instant) requestAnimationFrame(() => { rowsEl.style.transition = ""; $$(".tiles", stage).forEach((t) => (t.style.transition = "")); });
+        $$("#rowMap i", stage).forEach((d) => d.classList.toggle("on", !st.onChip && +d.dataset.jump === st.row));
       },
+      jump(ri) { const st = lstate(key); const el = this.el(ri, Math.min(st.cols[ri] || 0, this.rows[ri].items.length - 1)); if (el) setFocus(el); },
       hero(it) {
         if (!it) return;
         const k = it.t + ":" + (it.id || it.idx || it.key);
@@ -502,7 +516,8 @@
         }
         const copy = $("#heroCopy", stage);
         const fill = () => {
-          copy.innerHTML = '<div class="who">' + h.who + "</div>" + '<div class="hero-meta t-body sep">' + h.meta + "</div>" + '<div class="hero-quote">' + h.quote + "</div>";
+          copy.innerHTML = (h.eyebrow ? '<div class="eyebrow">' + h.eyebrow + "</div>" : "") + '<div class="who">' + h.who + "</div>" + '<div class="hero-meta sep">' + h.meta + "</div>" +
+            (h.quote ? '<div class="hero-quote' + (h.caption ? " is-caption" : "") + '">' + h.quote + "</div>" : "");
           copy.classList.remove("is-swapping");
         };
         if (copy.innerHTML) { copy.classList.add("is-swapping"); clearTimeout(this.swapT); this.swapT = setTimeout(fill, 160); } else fill();
@@ -560,7 +575,7 @@
       const queue = it.t === "featured" ? newestMems() : scr.rows[r].items.filter((x) => x.t === "memory" || x.t === "person").map((x) => x.id);
       return playMemory(it.id, queue, { route: back, key: scr.sname });
     }
-    if (it.t === "channel" || it.t === "channelAll") { st.focusId = it.key; return go("channel/" + (it.id || "all")); }
+    if (it.t === "channel" || it.t === "channelAll") { st.focusId = it.key; PL.chFrom = { route: back, key: scr.sname }; return go("channel/" + (it.id || "all")); }
     if (it.t === "door") return go("memories");
     if (it.t === "btn") {
       if (it.act === "playall") return openViewer(["m-bulk"], 0, { route: back, key: scr.sname, focusId: it.key }, 0);
@@ -575,11 +590,29 @@
   const MC = (id) => ({ t: "memory", id, key: "me:" + id }); // mixed rails: everything as a wide memory card
   function momentRows() {
     const visible = Object.keys(MOMENTS).filter((id) => !MOMENTS[id].hidden);
-    const recent = ["m-tom-new", "m-bulk", "m-may", "m-ed-video", "m-cake", "m-autumn", "m-drawing", "m-dinner", "m-may-sofa", "m-newborn"].filter((id) => visible.includes(id));
-    const byPerson = (p) => recent.filter((id) => MOMENTS[id].by === p).map(M);
+    const care = isCare();
+    // On a care TV the care home's posts mix into Recent by date, as in Figma 11-A.
+    const recent = (care ? ["m-tom-new", "c-concert", "m-bulk", "m-long-l", "c-scones", "m-long-p", "c-dog", "c-music", "m-tom-video", "m-cake", "m-may-video", "m-may", "m-ed-video", "m-autumn", "m-drawing", "m-dinner", "m-may-sofa", "m-newborn"]
+      : ["m-tom-new", "m-bulk", "m-long-l", "m-long-p", "m-tom-video", "m-cake", "m-may-video", "m-may", "m-ed-video", "m-autumn", "m-drawing", "m-dinner", "m-may-sofa", "m-newborn"]).filter((id) => visible.includes(id));
+    const older = ["m-boxing", "m-xmas-video", "m-xmas-day", "m-xmas-baking", "m-xmas-tree"];
+    const mine = recent.concat(older);
+    const byPerson = (p) => mine.filter((id) => MOMENTS[id].by === p).map(M);
+    const isFam = (id) => MOMENTS[id].fam !== "community";
+    const fam = (f) => Object.keys(MOMENTS).filter((id) => MOMENTS[id].fam === f && !MOMENTS[id].hidden).map(M);
+    const isVid = (id) => MOMENTS[id].items[0].type === "video";
     return {
       recent: { title: "Recent from everyone", items: recent.map(M) },
-      members: [["sarah", "Sarah’s moments"], ["ed", "Ed’s moments"], ["may", "May’s moments"], ["tom", "Tom’s moments"]].map(([p, t]) => ({ title: t, items: byPerson(p) })),
+      // Care TV: the care home's own rail, straight after Recent (Figma 11-A "From Cheltenham Manor · Community").
+      community: care ? { title: "From " + TV.community, items: fam("community"), hint: "posts from the care home" } : null,
+      // After the family member rails: videos, last Christmas, then the other families on this TV (home TV only; Margaret has one family).
+      members: [["sarah", "Sarah’s moments"], ["ed", "Ed’s moments"], ["may", "May’s moments"], ["tom", "Tom’s moments"]].map(([p, t]) => ({ title: t, items: byPerson(p) }))
+        .concat([
+          { title: "Videos", items: mine.filter((id) => isVid(id) && isFam(id)).map(M) },
+          { title: "Last Christmas", items: older.map(M), hint: "December 2025" },
+        ].concat(care ? [] : [
+          { title: "From The Nguyens", items: fam("nguyens"), hint: "also on this TV" },
+          { title: "From The Wilsons", items: fam("wilsons"), hint: "also on this TV" },
+        ])),
     };
   }
   function memoryRows() {
@@ -589,7 +622,8 @@
       { title: "People", items: memIds("person").map(MM) },
       { title: "Events", items: memIds("event").map(MM) },
       { title: "Places", items: memIds("place").map(MM) },
-      { title: "Timeline", items: memIds("timeline").map(MM) },
+      { title: "Looking back", items: memIds("timeline").map(MM) },
+      { title: "Memory channels", items: channelItems(), hint: "pick one and leave it playing" },
     ];
   }
   function channelItems() {
@@ -598,16 +632,16 @@
   }
   const featuredId = () => newestMems()[0];
   function homeRows() {
-    const { recent, members } = momentRows();
-    if (concept === "A") return [recent].concat(memoryRows(), members);
-    if (concept === "B") return [recent, { title: "Memories", items: [{ t: "door", key: "door", label: "Memories" }] }].concat(members);
-    if (concept === "C") return [recent, { title: "Memory channels", items: channelItems(), hint: "pick one and it plays non-stop" }].concat(members);
+    const { recent, members, community } = momentRows();
+    const top = community ? [recent, community] : [recent];
+    if (concept === "A") return top.concat(memoryRows(), members);
+    if (concept === "B") return top.concat([{ title: "Memories", items: [{ t: "door", key: "door", label: "Memories" }] }], members);
     const f = featuredId();
     return [
       { type: "buttons", items: [{ t: "btn", act: "playfeatured", id: f, label: "Play memory", key: "btn:play" }, { t: "btn", act: "seeall", label: "See all memories", key: "btn:all" }] },
-      recent,
+    ].concat(top, [
       { title: "Memories", items: newestMems().slice(0, 6).map(MC).concat([{ t: "door", key: "door", label: "See all memories" }]) },
-    ].concat(members);
+    ], members);
   }
 
   S.home = railScreen("home", { chip: true, home: true, rows: homeRows, featured: () => ({ t: "featured", id: featuredId() }) });
@@ -659,30 +693,54 @@
     screen.mount(screen.arg);
   }
 
+  /* ================= Controls, option 2: arrows on the screen edges, OK pauses ================= */
+  // The arrows stand for the remote's Left and Right keys, so they sit where those keys point. No focus to move:
+  // Left/Right step, OK pauses (a big "Paused" sign shows in the middle of the photo), and the arrow you pressed lights up.
+  const edgeUi = (atStart, paused) =>
+    '<div class="edge-arrow left' + (atStart ? " is-off" : "") + '" data-edge="prev"><img src="' + A("icon-chev-left-39.svg") + '" alt="Previous"></div>' +
+    '<div class="edge-arrow right" data-edge="next"><img src="' + A("icon-chev-right-39.svg") + '" alt="Next"></div>' +
+    '<div class="pause-ind' + (paused ? " is-on" : "") + '" id="pauseInd"><i><img src="' + A("icon-pause.svg") + '" alt=""></i><span>Paused</span></div>';
+  function hitEdge(dir) {
+    const el = $(".edge-arrow." + (dir === "prev" ? "left" : "right"), stage); if (!el) return;
+    el.classList.remove("is-hit"); void el.offsetWidth; el.classList.add("is-hit");
+    clearTimeout(hitEdge.t); hitEdge.t = setTimeout(() => el.classList.remove("is-hit"), 450);
+  }
+  function showPaused(host, paused) {
+    const p = $("#pauseInd", stage); if (p) p.classList.toggle("is-on", paused);
+    if (!paused && host) { const r = document.createElement("div"); r.className = "big-ring"; r.innerHTML = '<img src="' + A("icon-play-77.svg") + '" alt="">'; host.appendChild(r); setTimeout(() => r.remove(), 1000); }
+  }
+  const setCtlClass = (el, portrait) => { if (!el) return; el.classList.remove("ctl-1", "ctl-2"); el.classList.add("ctl-" + ctrlOpt); el.classList.toggle("is-p", !!portrait); };
+
   /* ================= Moment viewer ================= */
   const V = { list: [], mi: 0, pi: 0, t: 0, paused: false, from: null };
   const PHOTO_SECONDS = 6;
+  // Time to read a caption at a relaxed pace (about 130 words a minute, for older eyes across the room), plus a moment to look up.
+  const readSecs = (t) => ((t || "").trim() ? t.trim().split(/\s+/).length / 2.2 + 2 : 0);
   function openViewer(list, mi, from, pi) { V.list = list.slice(); V.mi = mi; V.pi = pi || 0; V.t = 0; V.paused = false; V.from = from || null; go("viewer/" + list[mi]); }
   S.viewer = {
     html() { return '<div class="scr viewer" id="viewer"></div>'; },
     mount(arg) {
       if (!V.list.length || V.list[V.mi] !== arg) { const ids = momentRows().recent.items.map((x) => x.id).filter((id) => !MOMENTS[id].bulk); V.list = ids; V.mi = Math.max(0, ids.indexOf(arg)); V.pi = 0; V.t = 0; V.paused = false; V.from = { route: "home", key: "home" }; }
-      this.paint(); this.wake();
+      this.paint(); this.wake(this.readMs());
       let last = performance.now();
       this.tick = setInterval(() => {
         const now = performance.now(), dt = Math.min(1, (now - last) / 1000); last = now;
-        if (!V.paused && !document.hidden) { const item = this.item(); V.t += dt / (item.type === "video" ? item.dur : PHOTO_SECONDS); if (V.t >= 1) this.step(1, true); else this.progress(); }
+        if (!V.paused && !document.hidden) { const item = this.item(); V.t += dt / (item.type === "video" ? item.dur : this.photoSecs()); if (V.t >= 1) this.step(1, true); else this.progress(); }
       }, 100);
     },
     unmount() { clearInterval(this.tick); clearTimeout(this.quietT); },
     moment() { return MOMENTS[V.list[V.mi]]; },
+    // A long caption gets the time to be read: the moment's photos share its reading time (never less than 6 s each),
+    // and the caption stays on screen at least that long before the controls fade.
+    photoSecs() { const m = this.moment(); return Math.max(PHOTO_SECONDS, readSecs(m.caption) / m.items.length); },
+    readMs() { return Math.max(4000, readSecs(this.moment().caption) * 1000); },
     item() { return this.moment().items[V.pi]; },
     paint() {
       const m = this.moment(), it = this.item(), who = PEOPLE[m.by];
       m.isNew = false;
       const n = m.items.length, vid = it.type === "video";
       const count = vid ? "Video" + DOT + (V.mi + 1) + " of " + V.list.length : n > 1 ? (V.pi + 1) + " / " + n : (V.mi + 1) + " / " + V.list.length;
-      const meta = FAMILY_OF() + DOT + (it.date || m.date) + (vid ? DOT + "Video" : n > 1 ? DOT + "Photo " + (V.pi + 1) + " of " + n : "");
+      const meta = FAMILY_OF(m) + DOT + (it.date || m.date) + (vid ? DOT + "Video" : n > 1 ? DOT + "Photo " + (V.pi + 1) + " of " + n : "");
       const ctrls = '<div class="ctrls"><div class="ring" data-f data-act="prev"><img src="' + A("icon-chev-left-39.svg") + '" alt="Previous"></div>' +
         '<div class="ring" data-f data-act="pause" id="pp"><img src="' + A(V.paused ? "icon-play-39.svg" : "icon-pause.svg") + '" alt=""></div>' +
         '<div class="ring" data-f data-act="next"><img src="' + A("icon-chev-right-39.svg") + '" alt="Next"></div></div>';
@@ -691,17 +749,19 @@
       if (it.o === "p") {
         h = '<div class="v-backdrop" style="background-image:url(' + it.src + ')"></div><div class="v-dim-p"></div>' +
           '<div class="v-pframe" style="background-image:url(' + it.src + ')"><div class="v-count">' + count + "</div></div>" +
-          '<div class="v-ptext">' + from + '<div class="v-caption t-body">' + m.caption + "</div></div>" +
-          '<div class="v-pctrls">' + ctrls + '</div><div class="v-progress v-p-progress"><i id="bar"></i></div>';
+          '<div class="v-ptext">' + from + '<div class="v-caption t-body' + (m.caption.length > 260 ? " is-long" : "") + '">' + m.caption + "</div></div>" +
+          (ctrlOpt === "1" ? '<div class="v-pctrls">' + ctrls + "</div>" : "") + '<div class="v-progress v-p-progress"><i id="bar"></i></div>';
       } else {
         h = '<div class="v-photo" style="background-image:url(' + it.src + ')"></div>' + (vid ? '<div class="v-dim"></div>' : "") +
           '<div class="v-scrim-b"></div><div class="v-scrim-t"></div><div class="v-count">' + count + "</div>" +
-          '<div class="v-info"><div>' + from + '<div class="v-caption t-body">' + m.caption + "</div></div>" + ctrls + "</div>" +
+          '<div class="v-info"><div>' + from + '<div class="v-caption t-body' + (m.caption.length > 260 ? " is-long" : "") + '">' + m.caption + "</div></div></div>" + (ctrlOpt === "1" ? '<div class="v-pctrls">' + ctrls + "</div>" : "") +
           (vid ? '<div class="v-time"><span class="t-small" id="tcur">0:00</span><div class="track"><i id="bar"></i><em id="head"></em></div><span class="t-small muted-2">' + mmss(it.dur) + "</span></div>"
             : '<div class="v-progress"><i id="bar"></i></div>');
       }
       const v = $("#viewer", stage);
+      if (ctrlOpt !== "1") h += edgeUi(V.mi === 0 && V.pi === 0, V.paused);
       v.innerHTML = h;
+      setCtlClass(v, it.o === "p");
       focused = null;
       setFocus($(this.lastCtrl ? '[data-act="' + this.lastCtrl + '"]' : "#pp", v) || $("#pp", v));
       this.progress();
@@ -713,7 +773,7 @@
       else bar.style.width = ((V.pi + V.t) / m.items.length) * 100 + "%";
     },
     step(d, auto) {
-      const m = this.moment();
+      const m = this.moment(), mi0 = V.mi;
       V.t = 0;
       if (d > 0) {
         if (V.pi < m.items.length - 1) V.pi++;
@@ -726,22 +786,24 @@
       if (!auto) V.paused = false;
       const quiet = $("#viewer", stage).classList.contains("is-quiet");
       this.paint();
-      if (!auto) this.wake(); else if (quiet) $("#viewer", stage).classList.add("is-quiet");
+      if (V.mi !== mi0) this.wake(this.readMs()); // a new moment: show who sent it and the whole caption, long enough to read
+      else if (!auto) this.wake(); else if (quiet) $("#viewer", stage).classList.add("is-quiet");
     },
     togglePause() {
       V.paused = !V.paused;
       const pp = $("#pp img", stage); if (pp) pp.src = A(V.paused ? "icon-play-39.svg" : "icon-pause.svg");
+      if (ctrlOpt !== "1") { showPaused($("#viewer", stage), V.paused); this.wake(); return; }
       if (this.item().type === "video" && V.paused) {
         const r = document.createElement("div"); r.className = "big-ring"; r.innerHTML = '<img src="' + A("icon-play-77.svg") + '" alt="">';
         $("#viewer", stage).appendChild(r); setTimeout(() => r.remove(), 1000);
       }
       this.wake();
     },
-    wake() {
+    wake(ms) {
       const v = $("#viewer", stage); if (!v) return;
       v.classList.remove("is-quiet");
       clearTimeout(this.quietT);
-      this.quietT = setTimeout(() => { if (!V.paused) v.classList.add("is-quiet"); else this.wake(); }, 4000);
+      this.quietT = setTimeout(() => { if (!V.paused) v.classList.add("is-quiet"); else this.wake(); }, ms || 4000);
     },
     exit() {
       const f = V.from || { route: "home", key: "home" };
@@ -754,8 +816,12 @@
     key(k) {
       const v = $("#viewer", stage), quiet = v && v.classList.contains("is-quiet");
       if (k === "back") { this.exit(); return true; }
-      if (k === "left" || k === "right") { const a = k === "left" ? "prev" : "next"; this.lastCtrl = a; press($('[data-act="' + a + '"]', stage)); return true; }
-      if (k === "ok") { if (quiet) { this.wake(); return true; } if (focused) press(focused); return true; }
+      if (k === "left" || k === "right") {
+        const a = k === "left" ? "prev" : "next"; this.lastCtrl = a;
+        if (ctrlOpt === "1") press($('[data-act="' + a + '"]', stage)); else { this.act(a); hitEdge(a); }
+        return true;
+      }
+      if (k === "ok") { if (ctrlOpt !== "1") { this.togglePause(); return true; } if (quiet) { this.wake(); return true; } if (focused) press(focused); return true; }
       if (k === "up" || k === "down") { this.wake(); return true; }
     },
   };
@@ -780,7 +846,7 @@
       mount(arg) {
         PL.mode = mode;
         if (mode === "memory") { if (!MEM[arg]) return go("home"); PL.id = arg; if (!PL.queue.includes(arg)) { PL.queue = newestMems(); PL.from = { route: "home", key: "home" }; } PL.phase = "title"; }
-        else { const list = CHANNELS(); PL.ch = Math.max(0, list.indexOf(arg)); PL.id = list[PL.ch]; PL.phase = "play"; if (!PL.from || PL.from.key !== "home") PL.from = { route: "home", key: "home" }; }
+        else { const list = CHANNELS(); PL.ch = Math.max(0, list.indexOf(arg)); PL.id = list[PL.ch]; PL.phase = "play"; PL.from = PL.chFrom || { route: "home", key: "home" }; PL.chFrom = null; }
         PL.i = 0; PL.t = 0; PL.paused = false; PL.elapsed = 0;
         this.build();
         let last = performance.now();
@@ -805,7 +871,7 @@
         if (mode === "memory" && PL.phase === "title") {
           const m = MEM[PL.id];
           p.innerHTML = '<div class="pl-photo kb kb-a" style="background-image:url(' + phSrc(photos[0]) + ')"></div><div class="pl-title-dim"></div>' +
-            '<div class="pl-title">' + kindChip(m) + "<h1>" + m.title + "</h1><p>" + m.when + DOT + photos.length + " photos" + (m.from.length ? DOT + "from " + names(m.from) : "") + "</p></div>";
+            '<div class="pl-title">' + kindChip(m) + "<h1>" + m.title + "</h1><p>" + [whenOf(m), photos.length + " photos", m.from.length ? "from " + names(m.from) : ""].filter(Boolean).join(DOT) + "</p></div>";
           return;
         }
         const m = mode === "memory" ? MEM[PL.id] : null;
@@ -817,7 +883,8 @@
           '<div class="story-chip" id="storyChip"></div><div class="segs" id="segs"></div>' +
           (mode === "channel" ? '<div class="ch-strip" id="chStrip"></div>' : "") +
           '<div class="v-info"><div><div class="v-from">' + avatars + '<div><div class="t-title">' + (m ? m.title : chTitle(PL.id)) + '</div><div class="meta t-body" id="plMeta"></div></div></div>' +
-          '<div class="v-caption t-body" id="plCap"></div></div>' + ctrls + '</div><div class="v-progress"><i id="bar"></i></div>';
+          '<div class="v-caption t-body" id="plCap"></div></div></div>' + (ctrlOpt === "1" ? '<div class="v-pctrls">' + ctrls + "</div>" : edgeUi(false, PL.paused)) + '<div class="v-progress"><i id="bar"></i></div>';
+        setCtlClass(p, false);
         focused = null; setFocus($("#pp", p));
         this.show(true);
         this.wake();
@@ -833,12 +900,12 @@
         while (wrap.children.length > 2) wrap.firstChild.remove();
         const m = mode === "memory" ? MEM[PL.id] : null;
         const ch = m && chapterOf(m, PL.i);
-        $("#storyChip", stage).innerHTML = (m ? kindChip(m) : '<span class="kind kind-channel"><i class="live"></i>Channel</span>') + '<span class="sep">' +
+        $("#storyChip", stage).innerHTML = '<b>' + (m ? m.label : LIVE) + '</b><span class="sep">' +
           (ch ? ch.label + DOT + ch.pos + " of " + ch.n + " this month" : m ? "Photo " + (PL.i + 1) + " of " + photos.length : chTitle(PL.id)) + "</span>";
         const segN = ch ? ch.months.length : Math.min(photos.length, 12);
         const segOn = ch ? ch.idx : Math.min(PL.i, 11);
         $("#segs", stage).innerHTML = photos.length > 12 && !ch ? "" : Array.from({ length: segN }, (_, i) => '<i class="' + (i < segOn ? "done" : i === segOn ? "on" : "") + '"><b></b></i>').join("");
-        $("#plMeta", stage).textContent = m ? m.label + "  ·  " + m.when + (m.from.length ? "  ·  from " + names(m.from) : "") : "Channel  ·  plays non-stop";
+        $("#plMeta", stage).textContent = m ? [m.label, whenOf(m), m.from.length ? "from " + names(m.from) : ""].filter(Boolean).join(DOT) : "Channel  ·  plays non-stop";
         $("#plCap", stage).textContent = ph.date + (ph.place ? " — " + ph.place : "");
         this.progress();
       },
@@ -868,7 +935,7 @@
         const n = MEM[next], p = $("#player", stage);
         const card = document.createElement("div");
         card.className = "upnext";
-        card.innerHTML = '<p class="t-small muted">Up next</p><div class="un-row"><div class="un-thumb" style="background-image:url(' + phSrc(n.photos[0]) + ')"></div><div>' + kindChip(n) + "<b>" + n.title + "</b><span>" + n.when + DOT + n.photos.length + " photos</span></div></div>" +
+        card.innerHTML = '<p class="t-small muted">Up next</p><div class="un-row"><div class="un-thumb" style="background-image:url(' + phSrc(n.photos[0]) + ')"></div><div>' + kindChip(n) + "<b>" + n.title + "</b><span>" + memSub(n).join(DOT) + "</span></div></div>" +
           '<p class="t-small muted">Plays in 5 s' + DOT + "OK to play now" + DOT + "Back to stop</p><div class=\"drain is-run\"></div>";
         p.classList.remove("is-quiet");
         p.appendChild(card);
@@ -877,7 +944,7 @@
       switchChannel(d) {
         const list = CHANNELS();
         PL.ch = (PL.ch + d + list.length) % list.length; PL.id = list[PL.ch]; PL.i = 0; PL.t = 0;
-        lstate("home").focusId = "ch:" + (PL.id === "all" ? "all" : PL.id);
+        lstate(PL.from.key).focusId = "ch:" + (PL.id === "all" ? "all" : PL.id);
         history.replaceState(null, "", "#channel/" + PL.id);
         this.build();
       },
@@ -887,24 +954,29 @@
         s.innerHTML = '<span class="prev">◀  ' + at(-1) + '</span><span class="cur">' + at(0) + '</span><span class="next">' + at(1) + "  ▶</span>";
         s.classList.add("is-on"); clearTimeout(this.stripT); this.stripT = setTimeout(() => s.classList.remove("is-on"), 3000);
       },
-      togglePause() { PL.paused = !PL.paused; const pp = $("#pp img", stage); if (pp) pp.src = A(PL.paused ? "icon-play-39.svg" : "icon-pause.svg"); $$(".pl-photo", stage).forEach((e) => (e.style.animationPlayState = PL.paused ? "paused" : "running")); this.wake(); },
+      togglePause() { PL.paused = !PL.paused; const pp = $("#pp img", stage); if (pp) pp.src = A(PL.paused ? "icon-play-39.svg" : "icon-pause.svg"); $$(".pl-photo", stage).forEach((e) => (e.style.animationPlayState = PL.paused ? "paused" : "running")); if (ctrlOpt !== "1") showPaused($("#player", stage), PL.paused); this.wake(); },
       wake() {
         const p = $("#player", stage); if (!p) return;
         p.classList.remove("is-quiet"); clearTimeout(this.quietT);
         this.quietT = setTimeout(() => { if (!PL.paused && PL.phase === "play") p.classList.add("is-quiet"); }, 4000);
       },
       exit() { go(PL.from.route); },
-      act(a) { if (a === "prev") this.step(-1); else if (a === "next") this.step(1); else if (a === "pause") this.togglePause(); },
+      act(a) {
+        if (mode === "channel" && (a === "prev" || a === "next")) return this.switchChannel(a === "prev" ? -1 : 1);
+        if (a === "prev") this.step(-1); else if (a === "next") this.step(1); else if (a === "pause" && PL.phase === "play") this.togglePause();
+      },
       key(k) {
         if (k === "back") { this.exit(); return true; }
         if (PL.phase === "title") { if (k === "ok") { PL.phase = "play"; PL.elapsed = 0; this.build(); } return true; }
         if (PL.phase === "next") { if (k === "ok") this.playNext(); return true; }
         const quiet = $("#player", stage).classList.contains("is-quiet");
         if (k === "left" || k === "right") {
-          if (mode === "channel") { this.switchChannel(k === "left" ? -1 : 1); return true; }
-          press($('[data-act="' + (k === "left" ? "prev" : "next") + '"]', stage)); return true;
+          const a = k === "left" ? "prev" : "next";
+          if (mode === "channel") { this.switchChannel(k === "left" ? -1 : 1); hitEdge(a); return true; }
+          if (ctrlOpt === "1") press($('[data-act="' + a + '"]', stage)); else { this.act(a); hitEdge(a); }
+          return true;
         }
-        if (k === "ok") { if (quiet) { this.wake(); return true; } this.togglePause(); return true; }
+        if (k === "ok") { if (quiet && ctrlOpt === "1") { this.wake(); return true; } this.togglePause(); return true; }
         if (k === "up" || k === "down") { this.wake(); if (mode === "channel") this.strip(); return true; }
       },
     };
@@ -921,17 +993,18 @@
     },
     mount() {
       this.slides = [];
-      if (concept === "C" || concept === "D") { // ambient becomes a memory channel
+      if (concept === "C") { // ambient becomes a memory channel
         newestMems().forEach((id) => MEM[id].photos.forEach((p) => { if (PH[p].o !== "p") this.slides.push({ src: phSrc(p), title: MEM[id].label + DOT + MEM[id].title, cap: PH[p].date + (PH[p].place ? " — " + PH[p].place : "") }); }));
       } else {
-        momentRows().recent.items.forEach(({ id }) => { const m = MOMENTS[id]; if (m.bulk) return; m.items.forEach((it) => { if (it.type === "photo" && it.o !== "p") this.slides.push({ src: it.src, title: PEOPLE[m.by].name + DOT + FAMILY_OF() + DOT + m.date, cap: m.caption }); }); });
+        momentRows().recent.items.forEach(({ id }) => { const m = MOMENTS[id]; if (m.bulk) return; m.items.forEach((it) => { if (it.type === "photo" && it.o !== "p") this.slides.push({ src: it.src, title: PEOPLE[m.by].name + DOT + FAMILY_OF(m) + DOT + m.date, cap: m.caption }); }); });
       }
       this.i = 0; this.front = "ambA";
       this.show(true);
-      this.t = setInterval(() => { this.i = (this.i + 1) % this.slides.length; this.show(); }, 8000);
+      const next = () => { this.t = setTimeout(() => { this.i = (this.i + 1) % this.slides.length; this.show(); next(); }, Math.max(8, readSecs(this.slides[this.i].cap) + 3) * 1000); };
+      next();
       this.clock(); this.c = setInterval(() => this.clock(), 5000);
     },
-    unmount() { clearInterval(this.t); clearInterval(this.c); },
+    unmount() { clearTimeout(this.t); clearInterval(this.c); },
     clock() { const d = new Date(); const t = $("#ambTime", stage); if (t) { t.textContent = clock12(d); $("#ambDate", stage).textContent = dateLabel(d); } },
     show(first) {
       const s = this.slides[this.i];
@@ -949,20 +1022,25 @@
   /* ================= This TV / family ================= */
   S.thistv = {
     html() {
-      const total = FAMILIES.reduce((s, f) => s + f.moments, 0);
-      return '<div class="scr">' + glows + topbar(true, false) + '<div class="page" style="display:flex;flex-direction:column;gap:80px">' +
-        '<div class="head"><div class="tv-avatar"><img src="' + A("icon-tv.svg") + '" alt=""></div><div><div class="t-title">' + TV.name + '</div><div class="t-body sep" style="color:rgba(255,255,255,.78);margin-top:4px">Connected since ' + TV.since + DOT + FAMILIES.length + " families" + DOT + total + " moments</div></div></div>" +
-        '<div><p class="section-label">Families on this TV</p><div class="fam-cards">' + FAMILIES.map((f, i) =>
+      const fams = isCare() ? FAMILIES.slice(0, 1) : FAMILIES; // Margaret has one family on her TV
+      const total = fams.reduce((s, f) => s + f.moments, 0);
+      const sub = isCare() ? TV.room + DOT + TV.community + DOT + "connected " + TV.since : "Connected since " + TV.since + DOT + fams.length + " families" + DOT + total + " moments";
+      const careCard = isCare() ? '<div><p class="section-label">Care community</p><div class="fam-cards"><div class="fam" data-f data-act="community"><div class="stack"><img src="' + A("avatar-community.svg") + '" alt=""></div>' +
+        '<div><div class="t-headline">' + TV.community + '</div><div class="meta">Activities team and nurses post here' + DOT + "managed by the care home</div></div></div></div></div>" : "";
+      return '<div class="scr">' + glows + topbar(true, false) + '<div class="page" style="display:flex;flex-direction:column;gap:' + (isCare() ? 56 : 80) + 'px">' +
+        '<div class="head"><div class="tv-avatar"><img src="' + A("icon-tv.svg") + '" alt=""></div><div><div class="t-title">' + TV.name + '</div><div class="t-body sep" style="color:rgba(255,255,255,.78);margin-top:4px">' + sub + "</div></div></div>" +
+        '<div><p class="section-label">' + (isCare() ? "Family" : "Families on this TV") + '</p><div class="fam-cards">' + fams.map((f, i) =>
           '<div class="fam" data-f data-act="family" data-fam="' + f.id + '"' + (i === 0 ? ' id="first"' : "") + '><div class="stack">' + f.members.map((m) => '<img src="' + PEOPLE[m[0]].avatar + '" alt="">').join("") + "</div>" +
-          '<div><div class="t-headline">' + f.name + '</div><div class="meta">' + f.members.length + " members" + DOT + f.moments + " moments</div></div></div>").join("") + "</div></div>" +
+          '<div><div class="t-headline">' + famName(f) + '</div><div class="meta">' + f.members.length + " members" + DOT + f.moments + " moments</div></div></div>").join("") + "</div></div>" + careCard +
         '<div><p class="section-label">Manage</p><div class="row-btn" data-f data-act="signout"><span class="ic"><img src="' + A("icon-log-out.svg") + '" alt=""></span>Sign out of this TV</div></div></div></div>';
     },
     mount() { if (this.lastFam) { const el = $('[data-fam="' + this.lastFam + '"]', stage); if (el) setFocus(el); } },
     act(a, el) {
       if (a === "family") { this.lastFam = el.dataset.fam; go("family/" + el.dataset.fam); }
       if (a === "signout") confirmSignOut();
+      if (a === "community") simpleToast(TV.community + " looks after this", "Ask the staff if something needs changing", 3200);
       if (a === "cancel") closeDialog();
-      if (a === "dosignout") { closeDialog(); paired = false; store.set("paired", false); go("welcome"); }
+      if (a === "dosignout") { closeDialog(); paired = false; store.set("paired", false); go("connect"); }
     },
     key(k) {
       if ($(".dialog-back", stage)) { if (k === "back") { closeDialog(); return true; } return; }
@@ -984,7 +1062,7 @@
     html(arg) {
       const f = FAMILIES.find((x) => x.id === arg) || FAMILIES[0];
       return '<div class="scr">' + glows + topbar(true, false) + '<div class="page" style="display:flex;flex-direction:column;gap:56px">' +
-        '<div><div class="t-title">' + f.name + '</div><div class="t-body sep" style="color:rgba(255,255,255,.78);margin-top:12px">On ' + TV.name + " since " + f.since + DOT + f.members.length + " members" + DOT + f.moments + " moments</div></div>" +
+        '<div><div class="t-title">' + famName(f) + '</div><div class="t-body sep" style="color:rgba(255,255,255,.78);margin-top:12px">On ' + TV.name + " since " + f.since + DOT + f.members.length + " members" + DOT + f.moments + " moments</div></div>" +
         '<div><p class="section-label" style="margin-bottom:24px">Members</p><div class="people">' + f.members.map((m, i) =>
           '<div class="person" data-f' + (i === 0 ? ' id="first"' : "") + '><div class="av"><img src="' + PEOPLE[m[0]].avatar + '" alt="">' +
           (m[2] ? '<span class="crown" title="Admin"><img src="' + A("icon-crown.svg") + '" alt="Admin"></span>' : "") + "</div><div><b>" + PEOPLE[m[0]].name + "</b><span>" + m[1] + " moments</span></div></div>").join("") +
@@ -999,7 +1077,7 @@
   function connect(msg) {
     paired = true; store.set("paired", true);
     LSTATE.home = null;
-    pendingToast = [msg, "Moments will start arriving here", 3200];
+    pendingToast = isCare() ? ["Connected to Margaret’s family", TV.community + "’s posts will show here too", 3600] : [msg, "Moments will start arriving here", 3200];
     go("home");
   }
   function go(route, replace) {
@@ -1010,6 +1088,7 @@
   }
   function render() {
     let [name, arg] = location.hash.replace(/^#/, "").split("/");
+    name = { welcome: "connect", pair: "connect", qr: "connect", pin: "code", community: "connect" }[name] || name; // screens replaced on 19 Nov
     if (!S[name]) name = "splash";
     if (screen && screen.unmount) screen.unmount();
     clearToast(); toastState.countdown = false;
@@ -1026,22 +1105,65 @@
 
   /* ================= Input ================= */
   const KEYMAP = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", Enter: "ok", " ": "ok", Escape: "back", Backspace: "delete", GoBack: "back", BrowserBack: "back" };
-  document.addEventListener("keydown", (e) => {
-    if (e.target.closest && e.target.closest("select")) return; // the review panel's dropdown keeps its own keys
-    let k = KEYMAP[e.key] || (/^\d$/.test(e.key) ? e.key : null);
-    if (!k || e.metaKey || e.ctrlKey || e.altKey) return;
-    e.preventDefault();
+  // Every way of moving (remote, keyboard, mouse wheel, trackpad, swipe) goes through input(), so they all behave the same.
+  function input(k) {
     resetIdle();
     if (k === "delete" && current !== "pin") k = "back";
     if (screen && screen.key && screen.key(k)) return;
     if (k === "delete") k = "back";
     if (["up", "down", "left", "right"].includes(k)) moveFocus(k);
     else if (k === "ok") press(focused);
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("select")) return; // the review panel's dropdown keeps its own keys
+    const k = KEYMAP[e.key] || (/^\d$/.test(e.key) ? e.key : null);
+    if (!k || e.metaKey || e.ctrlKey || e.altKey) return;
+    e.preventDefault();
+    input(k);
   });
-  stage.addEventListener("mouseover", (e) => { const el = e.target.closest("[data-f]"); if (el && current !== "ambient" && !el.closest(".is-away")) setFocus(el); });
+  // Mouse wheel / trackpad: one notch or flick = one step. After a flick a trackpad keeps sending smaller and smaller deltas (inertia); those are ignored.
+  const vpEl = $(".viewport");
+  const WH = { acc: 0, lock: 0, last: 0, lastAbs: 0 };
+  vpEl.addEventListener("wheel", (e) => {
+    if (e.ctrlKey) return; // pinch-zoom
+    e.preventDefault();
+    const horiz = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
+    let d = horiz && Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (e.deltaMode === 1) d *= 40;
+    const now = performance.now(), abs = Math.abs(d);
+    const inertia = now - WH.last < 120 && abs < WH.lastAbs * 0.92;
+    if (now - WH.last > 250) WH.acc = 0;
+    WH.last = now; WH.lastAbs = abs;
+    if (now < WH.lock || inertia) return;
+    WH.acc += d;
+    if (Math.abs(WH.acc) < 30) return;
+    const k = horiz ? (WH.acc > 0 ? "right" : "left") : WH.acc > 0 ? "down" : "up";
+    WH.acc = 0; WH.lock = now + (horiz ? 140 : 260);
+    input(k);
+  }, { passive: false });
+  // Touch: swipe like on a phone (drag up = next row, drag left = next card). A tap is still a click.
+  let touch0 = null;
+  vpEl.addEventListener("touchstart", (e) => { touch0 = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null; }, { passive: true });
+  vpEl.addEventListener("touchmove", (e) => { if (touch0) e.preventDefault(); }, { passive: false });
+  vpEl.addEventListener("touchend", (e) => {
+    if (!touch0) return;
+    const t = e.changedTouches[0], dx = t.clientX - touch0.x, dy = t.clientY - touch0.y;
+    touch0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 40) return;
+    e.preventDefault(); // no click after a swipe
+    const across = Math.abs(dx) > Math.abs(dy), n = across ? Math.min(4, Math.round(Math.abs(dx) / 140) || 1) : 1;
+    for (let i = 0; i < n; i++) input(across ? (dx < 0 ? "right" : "left") : dy < 0 ? "down" : "up");
+  });
+  // Hover focuses only when the mouse really moves (rows sliding under a still pointer must not steal focus).
+  stage.addEventListener("mousemove", (e) => { const el = e.target.closest("[data-f]"); if (el && current !== "ambient" && !el.closest(".is-away")) setFocus(el); });
   stage.addEventListener("click", (e) => {
     resetIdle();
     if (current === "ambient") return screen.click();
+    const ed = e.target.closest("[data-edge]");
+    if (ed && screen && screen.act) { screen.act(ed.dataset.edge); hitEdge(ed.dataset.edge); return; }
+    if (ctrlOpt !== "1" && (current === "viewer" || current === "play" || current === "channel") && !e.target.closest("[data-f]")) { if (screen.act) screen.act("pause"); return; }
+    const j = e.target.closest("[data-jump]");
+    if (j && screen && screen.jump) return screen.jump(+j.dataset.jump);
     if (current === "home" && e.target.closest(".toast") && toastState.countdown) return playArrival();
     const el = e.target.closest("[data-f]");
     if (el) { setFocus(el); press(el); }
@@ -1057,16 +1179,38 @@
 
   /* ================= Review panel ================= */
   const sel = $("#concept"), chk = $("#launch");
-  const syncUrl = () => history.replaceState(null, "", "?concept=" + concept + (launch ? "&launch=1" : "") + location.hash); // a copied link opens the same option
+  const syncUrl = () => history.replaceState(null, "", "?concept=" + concept + (launch ? "&launch=1" : "") + (isCare() ? "&tv=care" : "") + (ctrlOpt !== "1" ? "&ctrls=" + ctrlOpt : "") + location.hash); // a copied link opens the same options
+  const ctrlSel = $("#ctrlopt"), ctrlNote = $("#ctrlNote");
+  const ctrlDescribe = () => { if (ctrlNote) ctrlNote.textContent = {
+    1: "Previous, pause and next under the caption, bottom-left on every photo. Focus moves between them.",
+    2: "Big arrows on the left and right edges of the screen, the same on every photo. Left/Right step, OK pauses.",
+  }[ctrlOpt]; };
+  if (ctrlSel) {
+    ctrlSel.value = ctrlOpt; ctrlDescribe();
+    ctrlSel.addEventListener("change", () => {
+      ctrlOpt = ctrlSel.value; store.set("ctrls", ctrlOpt); syncUrl(); ctrlDescribe();
+      if (current === "viewer") { screen.paint(); screen.wake(); }
+      else if ((current === "play" || current === "channel") && PL.phase === "play") screen.build();
+    });
+  }
+  const tvSel = $("#tvkind");
+  if (tvSel) {
+    tvSel.value = TV.kind;
+    tvSel.addEventListener("change", () => {
+      TV = TVS[tvSel.value]; store.set("tv", TV.kind);
+      Object.keys(LSTATE).forEach((k) => (LSTATE[k] = null));
+      syncUrl();
+      if (screen && screen.rows) rerender(); else render(); // stay on the same screen, redrawn for the other TV
+    });
+  }
   if (sel) { sel.value = concept; sel.addEventListener("change", () => { concept = sel.value; store.set("concept", concept); LSTATE.home = null; syncUrl(); describe(); go("home"); }); }
   if (chk) { chk.checked = launch; chk.addEventListener("change", () => { launch = chk.checked; store.set("launch", launch); LSTATE.home = null; LSTATE.memories = null; syncUrl(); describe(); if (screen && screen.rows) rerender(); else go("home"); }); }
   function describe() {
     const d = $("#conceptNote"); if (!d) return;
     d.textContent = {
-      A: "Every memory type gets its own rail on Home: New memories, People, Events, Places, Timeline.",
+      A: "Every memory type gets its own rail on Home: New memories, People, Events, Places, Looking back, Memory channels.",
       B: "Home stays as it was, plus one Memories card. It opens a Memories screen with all the rails.",
-      C: "Memories become TV channels. Pick one and it plays non-stop; left and right change channel.",
-      D: "Home leads with one featured memory, then one Memories rail ending in See all. Idle → memory channel.",
+      C: "Home leads with one featured memory, then one Memories rail ending in See all. Idle → memory channel.",
     }[concept] + (launch ? " Launch version: no People or Events yet." : "");
   }
   describe();
