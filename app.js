@@ -36,6 +36,8 @@
   };
   let TV = TVS.home;
   const isCare = () => TV.kind === "care";
+  // Margaret's families: her son's (the Johnsons, shown as "Margaret's family") and her daughter's (the Wilsons).
+  const CARE_FAMILIES = () => FAMILIES.filter((f) => f.id === "johnsons" || f.id === "wilsons");
 
   // The family's photo library: when each was taken (photo date), where, and who is in it (named on the phones).
   const PH = {
@@ -202,7 +204,22 @@
     if (focused) focused.classList.remove("is-focus");
     focused = el;
     el.classList.add("is-focus");
+    keepInView(el);
     if (screen && screen.onFocus) screen.onFocus(el);
+  }
+  // Simple list screens (This TV, a family) slide up when the focused item would go below the bottom edge, and back down
+  // when it goes above the top bar — so a long list (many families, many members) is never cut off.
+  function keepInView(el) {
+    const page = el.closest(".page"); if (!page || el.closest(".dialog-back")) return;
+    const st = stage.getBoundingClientRect(), s = st.height / 1080, r = el.getBoundingClientRect();
+    const top = (r.top - st.top) / s, bottom = (r.bottom - st.top) / s, cur = page._dy || 0;
+    let dy = cur;
+    // Back on the top row → back to the very top, so the screen's title shows again
+    const above = $$("[data-f]", page).some((x) => x !== el && x.getBoundingClientRect().bottom <= r.top + 2);
+    if (!above) dy = 0;
+    else if (bottom > 1016) dy = cur - (bottom - 1016);
+    else if (top < 210) dy = Math.min(0, cur + (210 - top));
+    if (dy !== cur) { page._dy = dy; page.style.transform = "translateY(" + dy + "px)"; }
   }
   function focusables() { return $$("[data-f]", stage).filter((el) => el.offsetParent !== null); }
   function moveFocus(dir) {
@@ -604,12 +621,14 @@
       recent: { title: "Recent from everyone", items: recent.map(M) },
       // Care TV: the care home's own rail, straight after Recent (Figma 11-A "From Cheltenham Manor · Community").
       community: care ? { title: "From " + TV.community, items: fam("community"), hint: "posts from the care home" } : null,
-      // After the family member rails: videos, last Christmas, then the other families on this TV (home TV only; Margaret has one family).
+      // After the family member rails: videos, last Christmas, then the other families on this TV (Margaret: her daughter’s family, the Wilsons).
       members: [["sarah", "Sarah’s moments"], ["ed", "Ed’s moments"], ["may", "May’s moments"], ["tom", "Tom’s moments"]].map(([p, t]) => ({ title: t, items: byPerson(p) }))
         .concat([
           { title: "Videos", items: mine.filter((id) => isVid(id) && isFam(id)).map(M) },
           { title: "Last Christmas", items: older.map(M), hint: "December 2025" },
-        ].concat(care ? [] : [
+        ].concat(care ? [
+          { title: "From The Wilsons", items: fam("wilsons"), hint: "also on this TV" },
+        ] : [
           { title: "From The Nguyens", items: fam("nguyens"), hint: "also on this TV" },
           { title: "From The Wilsons", items: fam("wilsons"), hint: "also on this TV" },
         ])),
@@ -1022,14 +1041,16 @@
   /* ================= This TV / family ================= */
   S.thistv = {
     html() {
-      const fams = isCare() ? FAMILIES.slice(0, 1) : FAMILIES; // Margaret has one family on her TV
+      const fams = isCare() ? CARE_FAMILIES() : FAMILIES; // a resident can have more than one family (son's, daughter's…)
       const total = fams.reduce((s, f) => s + f.moments, 0);
       const sub = isCare() ? TV.room + DOT + TV.community + DOT + "connected " + TV.since : "Connected since " + TV.since + DOT + fams.length + " families" + DOT + total + " moments";
-      const careCard = isCare() ? '<div><p class="section-label">Care community</p><div class="fam-cards"><div class="fam" data-f data-act="community"><div class="stack"><img src="' + A("avatar-community.svg") + '" alt=""></div>' +
-        '<div><div class="t-headline">' + TV.community + '</div><div class="meta">Activities team and nurses post here' + DOT + "managed by the care home</div></div></div></div></div>" : "";
-      return '<div class="scr">' + glows + topbar(true, false) + '<div class="page" style="display:flex;flex-direction:column;gap:' + (isCare() ? 56 : 80) + 'px">' +
+      // Care TV: Families on this TV, then the care home, then Manage — stacked, because a resident may have several families.
+      // Down slides the page so nothing is cut off (keepInView).
+      const careCard = isCare() ? '<div><p class="section-label">Care community</p><div class="fam-cards"><div class="fam fam-care" data-f data-act="community"><div class="stack"><img src="' + A("avatar-community.svg") + '" alt=""></div>' +
+        '<div><div class="t-headline">' + TV.community + '</div><div class="meta">Activities team and nurses post here</div><div class="meta">Managed by the care home</div></div></div></div></div>' : "";
+      return '<div class="scr">' + glows + topbar(true, false) + '<div class="page" style="display:flex;flex-direction:column;gap:80px">' +
         '<div class="head"><div class="tv-avatar"><img src="' + A("icon-tv.svg") + '" alt=""></div><div><div class="t-title">' + TV.name + '</div><div class="t-body sep" style="color:rgba(255,255,255,.78);margin-top:4px">' + sub + "</div></div></div>" +
-        '<div><p class="section-label">' + (isCare() ? "Family" : "Families on this TV") + '</p><div class="fam-cards">' + fams.map((f, i) =>
+        '<div><p class="section-label">Families on this TV</p><div class="fam-cards">' + fams.map((f, i) =>
           '<div class="fam" data-f data-act="family" data-fam="' + f.id + '"' + (i === 0 ? ' id="first"' : "") + '><div class="stack">' + f.members.map((m) => '<img src="' + PEOPLE[m[0]].avatar + '" alt="">').join("") + "</div>" +
           '<div><div class="t-headline">' + famName(f) + '</div><div class="meta">' + f.members.length + " members" + DOT + f.moments + " moments</div></div></div>").join("") + "</div></div>" + careCard +
         '<div><p class="section-label">Manage</p><div class="row-btn" data-f data-act="signout"><span class="ic"><img src="' + A("icon-log-out.svg") + '" alt=""></span>Sign out of this TV</div></div></div></div>';

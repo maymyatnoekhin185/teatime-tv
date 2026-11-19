@@ -312,6 +312,11 @@ body.panel-hidden .viewport { left: 0; }
 .stack { display: flex; }
 .stack img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; margin-right: -12px; border: 0; }
 .fam .meta { margin-top: 4px; font: 400 28px/32px Rubik, sans-serif; color: rgba(255,255,255,.75); white-space: pre; }
+.page { transition: transform .3s var(--ease); }
+/* Care TV: the care home card is wider and its text wraps instead of running out of the card */
+.fam.fam-care { width: 600px; }
+.fam.fam-care .meta { white-space: normal; }
+.fam.fam-care .meta + .meta { margin-top: 2px; }
 .row-btn {
   width: 560px; height: 100px; padding: 0 24px; border-radius: 20px; display: flex; align-items: center; gap: 20px;
   background: var(--glass); border: 2px solid var(--glass-edge); backdrop-filter: blur(20px); font: 500 30px/32px Outfit, sans-serif;
