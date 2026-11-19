@@ -50,16 +50,29 @@ Replaced on 19 Nov: Welcome ("Get started"), the TV-made pairing code, the 6-dig
 - New moments wear a pink **New** pill until watched.
 
 ## Viewer
-- Landscape photo: full bleed with scrims. Portrait photo: blurred backdrop, photo on the right, text on the left. Video: poster, time and playhead.
+- **Photo shapes (19 Nov): every photo and video is shown whole; its real shape picks the layout.** Phones send all sorts: landscape photos are usually 4:3 (not 16:9), portrait 3:4, plus squares, 9:16, screenshots and panoramas. Before, a 4:3 photo shown full screen lost about a quarter of its height (often the tops of heads), and square Christmas photos were cropped. Now the TV measures each photo when it loads and never crops more than a sliver:
+  | Shape (width ÷ height) | Examples | Layout |
+  |---|---|---|
+  | **Wide** (1.6–2.2) | 16:9 photos and videos | Full screen; text bottom-left over a dark fade |
+  | **Standard landscape** (1.2–1.6) | 4:3 and 3:2 phone photos | Whole photo, full height, centred; a blurred copy of it fills the sides; text bottom-left over a dark fade |
+  | **Square to tall** (under 1.2) | 1:1, 3:4, 9:16, screenshots | Framed on the right (inside 824 × 968), sized to its own shape, with the sender and full caption on the left. **When the text fades, the photo glides to the centre** (never a half-empty screen); any key brings the text back and the photo glides right again. Same for portrait videos (production centres videos but not photos; here both behave the same) |
+  | **Panorama** (over 2.2) | 3:1 | Whole photo across the top; blurred copy fills the rest; text underneath |
+  Controls stay bottom-left and the whole caption shows in every layout. The **memory player** and **ambient** follow the same rule: a wide photo fills the screen, any other shape sits whole in the middle over a blurred copy of itself (portraits and squares used to be cropped there; ambient now also uses portrait photos). Test: review panel → **6s · Every photo shape** (16:9, 4:3, 3:2, square, 3:4, 9:16, panorama). Sample `shape-43.jpg` and `shape-pano.jpg` are cut from the family photos.
+- **Every case, and videos really play** (review panel → Watching):
+  | Case | Link | Layout |
+  |---|---|---|
+  | Landscape photo | `#viewer/m-cake` | Full screen with scrims (16:9) |
+  | Portrait photo | `#viewer/m-drawing` | Blurred backdrop, photo framed on the right at its own shape, text on the left |
+  | Landscape video | `#viewer/m-ed-video` | Plays full screen; time row (0:03 / 0:10) instead of the progress line |
+  | Portrait video | `#viewer/m-vid-p` | Plays inside the portrait frame on the right; same time row |
+  | Mixed moment | `#viewer/m-mix` | Landscape photo → landscape video → portrait photo → portrait video → landscape photo. Each item uses its own layout; the counter says "Photo 1 of 5" / "Video 2 of 5"; the buttons never move |
+- Videos are real `<video>` files: a photo gets its time on screen, a video plays to its end and then the viewer moves on. OK pauses and resumes the video itself; Left/Right skip. The clip's poster (first frame) is the card and hero image on Home. Cards count "3 photos · 2 videos".
+- The clips in `assets/clip-*.webm` are placeholders: 10 s, 30 fps, made in the browser from the family's photos (slow pan and zoom with a fade), landscape 1280×720 and portrait 720×1280, no sound. Drop real phone videos in with the same names to replace them. A browser pauses video while the page is hidden; the viewer resumes it when the page is shown again.
+- The dev server answers video byte-range requests, so videos load and seek like on a real server.
 - Photos advance every 6 s through the moment's photos, then on to the next card in the row; after the last card it returns to Home on that card. A long caption slows this down (see "Long captions").
 - Left/Right = previous/next photo at any time. OK = pause/play (video shows the big play ring for 1 s). Up/Down just shows the controls.
-- **Controls: two options to compare** (review panel → "Viewer controls"; `&ctrls=2` in the link). Applies to the moment viewer and the memory player/channels. Problem being solved: the buttons used to jump from bottom-right (landscape) to bottom-left (portrait) when skipping, and people expect "next" on the right.
-  | Option | Where | How it works |
-  |---|---|---|
-  | **1 · Bottom-left buttons** | Previous · pause · next, bottom-left above the progress line, the same on every photo. Sender and caption above them. | Focus moves between the three buttons; Left/Right still step, OK presses the focused button. |
-  | **2 · Arrows on the screen edges** | A big ‹ on the left edge and › on the right edge, halfway down, the same on every photo. Portrait: the text moves right a little so the left arrow has its own space. | No buttons to focus: Left/Right step and the arrow you pressed lights up pink; OK pauses (a big "Paused" sign in the middle of the photo; OK again plays, with a quick play flash). The arrows point where the remote's keys point. |
-  - In 2: the left arrow is dimmed on the very first photo; the arrows fade with the other controls; with a mouse, click an arrow to step or anywhere else on the photo to pause. In channels the arrows change channel.
-  - Option 3 (arrows hugging a portrait photo) was tried and dropped on 19 Nov: the left arrow moved between landscape and portrait. An old `&ctrls=3` link opens option 2.
+- **Controls stay in one place**: previous · pause · next, bottom-left above the progress line, on every photo (landscape, portrait, video) and in the memory player. Skipping from a landscape photo to a portrait one never moves the button you're pressing (before, they jumped from bottom-right to bottom-left). The sender and caption sit above them. Left/Right step at any time, OK presses the focused button.
+  - Tried and dropped on 19 Nov: arrows on the screen edges (option 2) and arrows beside a portrait photo (option 3). Old `&ctrls=` links are ignored.
 - Controls hide after 4 s while playing (6f: only the thin progress line stays), or after the caption's reading time if that's longer. Paused keeps them visible. When the next moment starts by itself, the sender and caption come back for its reading time.
 - Back → Home, focused on the card that was playing.
 

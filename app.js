@@ -95,13 +95,15 @@
 
   // Moments = what someone sent (unchanged by memories). The bulk upload is one moment with 100 photos.
   const P = (src, o) => ({ type: "photo", src: A(src), o: o || "l" });
+  // A video: a real clip in assets/ (placeholder 10 s clips made from family photos; swap in real phone videos any time) + its first frame as the poster.
+  const VID = (clip, poster, o) => ({ type: "video", src: A(clip), poster: A(poster), o: o || "l", dur: 10 });
   const MOMENTS = {
     "m-bulk": { by: "sarah", date: "Yesterday", caption: "Six months of us, in one go.", isNew: true, bulk: true, range: "May – Oct 2026",
       memories: ["tl-six", "pl-daylesford", "ev-lily", "ev-out"], items: [] },
     "m-may": { by: "may", date: "12 Oct 2026", caption: "We always enjoy regular visits from Leckie — the kids love the lake!",
       items: [P("photo-kids-path.jpg"), P("photo-autumn-dog.jpg"), P("photo-sarah-3.jpg", "p"), P("photo-beach.jpg"), P("photo-ed-1.jpg")] },
     "m-ed-video": { by: "ed", date: "11 Oct 2026", caption: "Sunday lunch at ours — Lisa, you were missed! Here’s the toast.",
-      items: [{ type: "video", src: A("photo-sofa-dog.jpg"), o: "l", dur: 70 }], thumb: A("photo-beach.jpg") },
+      items: [VID("clip-lunch-l.webm", "photo-ed-1.jpg")] },
     "m-cake": { by: "sarah", date: "25 Oct 2026", caption: "Six candles, one big breath — happy birthday, Lily!", items: [P("photo-birthday.jpg")] },
     "m-autumn": { by: "tom", date: "10 Oct 2026", caption: "Biscuit’s first proper walk in the leaves.", items: [P("photo-autumn-dog.jpg")] },
     "m-drawing": { by: "sarah", date: "9 Oct 2026", caption: "Mia drew our whole family for you, Grandma — that’s you in the middle!", items: [P("photo-drawing.jpg", "p")] },
@@ -112,27 +114,31 @@
     // Longest captions allowed on the phone (250 characters): one landscape, one portrait.
     "m-long-l": { by: "may", date: "15 Nov 2026", caption: "Mum, we finally made it back to the little beach near Anglesea where you used to take us every summer. The kids built a sandcastle with a moat, Ed fell asleep under the umbrella, and we all agreed the fish and chips are still the best on the coast!", items: [P("photo-beach.jpg"), P("xmas-beach.jpg")] },
     "m-long-p": { by: "sarah", date: "13 Nov 2026", caption: "Found this one from Christmas and it made me cry a little. Lily still talks about that big hug every time we drive past your street. She asked if we can visit again before the holidays, so of course I said yes. Love you heaps, see you very soon.", items: [P("xmas-nan-hug.jpg", "p")] },
-    "m-tom-video": { by: "tom", date: "2 Nov 2026", caption: "Biscuit learning to fetch (sort of).", items: [{ type: "video", src: A("photo-autumn-dog.jpg"), o: "l", dur: 42 }] },
-    "m-may-video": { by: "may", date: "19 Oct 2026", caption: "Mia’s first go on the big slide!", items: [{ type: "video", src: A("photo-kids-path.jpg"), o: "l", dur: 35 }] },
+    "m-vid-p": { by: "tom", date: "16 Nov 2026", caption: "Going up on stage for the science prize — Mum filmed it!", items: [VID("clip-tom-p.webm", "photo-tom-grad.jpg", "p")] },
+    "m-mix": { by: "sarah", date: "15 Nov 2026", caption: "Our weekend away: a few photos and a couple of videos.", items: [P("photo-autumn-dog.jpg"), VID("clip-dog-l.webm", "photo-kids-path.jpg"), P("photo-sarah-3.jpg", "p"), VID("clip-drawing-p.webm", "photo-drawing.jpg", "p"), P("photo-beach.jpg")] },
+    // Every shape a phone sends, in one moment: 16:9, 4:3, 3:2, square, 3:4, 9:16, panorama.
+    "m-shapes": { by: "may", date: "14 Nov 2026", caption: "All sorts of shapes from our trip — the TV shows each one whole.", items: [P("photo-kids-path.jpg"), P("shape-43.jpg"), P("photo-sofa-dog.jpg"), P("xmas-tree.jpg"), P("photo-drawing.jpg", "p"), P("xmas-star.jpg", "p"), P("shape-pano.jpg")] },
+    "m-tom-video": { by: "tom", date: "2 Nov 2026", caption: "Biscuit learning to fetch (sort of).", items: [VID("clip-dog-l.webm", "photo-autumn-dog.jpg")] },
+    "m-may-video": { by: "may", date: "19 Oct 2026", caption: "Mia showing you her drawing — she made you a card too!", items: [VID("clip-drawing-p.webm", "photo-drawing.jpg", "p")] },
     // Last Christmas: older moments, further back than Recent.
     "m-xmas-tree": { by: "sarah", date: "20 Dec 2025", caption: "Tree’s up! Lily put the star on (with a little help).", items: [P("xmas-tree.jpg"), P("xmas-star.jpg", "p")] },
     "m-xmas-baking": { by: "may", date: "22 Dec 2025", caption: "The gingerbread production line is open.", items: [P("xmas-baking.jpg")] },
     "m-xmas-day": { by: "ed", date: "25 Dec 2025", caption: "Christmas lunch at Mum’s — what a feast.", items: [P("xmas-dinner.jpg"), P("xmas-presents.jpg"), P("xmas-nan-hug.jpg", "p")] },
-    "m-xmas-video": { by: "ed", date: "25 Dec 2025", caption: "Leo opening the big present. Worth the wait!", items: [{ type: "video", src: A("xmas-presents.jpg"), o: "l", dur: 58 }] },
+    "m-xmas-video": { by: "ed", date: "25 Dec 2025", caption: "Leo opening the big present. Worth the wait!", items: [VID("clip-presents-l.webm", "xmas-presents.jpg")] },
     "m-boxing": { by: "tom", date: "26 Dec 2025", caption: "Boxing Day swim at Torquay — freezing!", items: [P("xmas-beach.jpg")] },
     // Cheltenham Manor's posts for Margaret (care community TV only; placeholder photos repeat).
     "c-concert": { fam: "community", by: "activities", date: "17 Nov 2026", caption: "Margaret enjoyed the garden concert this afternoon — a lovely sing-along!", items: [P("photo-ed-1.jpg")], isNew: true },
     "c-scones": { fam: "community", by: "activities", date: "14 Nov 2026", caption: "Scone morning in the Lakeside kitchen. Margaret was in charge of the jam!", items: [P("xmas-baking.jpg")] },
     "c-dog": { fam: "community", by: "priya", date: "11 Nov 2026", caption: "Biscuit the therapy dog came to visit. Margaret didn’t want to let him go.", items: [P("photo-sofa-dog.jpg")] },
-    "c-music": { fam: "community", by: "activities", date: "6 Nov 2026", caption: "Music afternoon in the lounge — Margaret led the singing.", items: [{ type: "video", src: A("xmas-dinner.jpg"), o: "l", dur: 48 }] },
+    "c-music": { fam: "community", by: "activities", date: "6 Nov 2026", caption: "Music afternoon in the lounge — Margaret led the singing.", items: [VID("clip-lunch-l.webm", "photo-ed-1.jpg")] },
     // The other two families on this TV (placeholder photos repeat).
     "m-linh-1": { fam: "nguyens", by: "linh", date: "16 Nov 2026", caption: "Bánh xèo night — the kids flipped their own!", items: [P("xmas-dinner.jpg"), P("xmas-baking.jpg")] },
     "m-nam-1": { fam: "nguyens", by: "nam", date: "8 Nov 2026", caption: "Morning walk before the rain came in.", items: [P("photo-kids-path.jpg")] },
-    "m-mai-video": { fam: "nguyens", by: "mai", date: "1 Nov 2026", caption: "Bà, this song is for you!", items: [{ type: "video", src: A("photo-drawing.jpg"), o: "l", dur: 64 }] },
+    "m-mai-video": { fam: "nguyens", by: "mai", date: "1 Nov 2026", caption: "Bà, this song is for you!", items: [VID("clip-drawing-p.webm", "photo-drawing.jpg", "p")] },
     "m-linh-2": { fam: "nguyens", by: "linh", date: "20 Oct 2026", caption: "Mai’s first day at big school.", items: [P("photo-sarah-3.jpg", "p")] },
     "m-henry-1": { fam: "wilsons", by: "henry", date: "14 Nov 2026", caption: "Back on the boat for the first time since winter.", items: [P("photo-beach.jpg"), P("xmas-beach.jpg")] },
     "m-grace-1": { fam: "wilsons", by: "grace", date: "3 Nov 2026", caption: "The garden is finally blooming.", items: [P("photo-autumn-dog.jpg")] },
-    "m-henry-video": { fam: "wilsons", by: "henry", date: "24 Oct 2026", caption: "Grandpa’s famous card trick, filmed at last.", items: [{ type: "video", src: A("photo-ed-1.jpg"), o: "l", dur: 51 }] },
+    "m-henry-video": { fam: "wilsons", by: "henry", date: "24 Oct 2026", caption: "Grandpa’s famous card trick, filmed at last.", items: [VID("clip-lunch-l.webm", "photo-ed-1.jpg")] },
   };
   // Sarah's 100 photos, May – Oct 2026 (placeholder photos repeat). Grouped by month for the opened view.
   const BULK_MONTHS = [["2026-10", 18], ["2026-09", 21], ["2026-08", 17], ["2026-07", 16], ["2026-06", 14], ["2026-05", 14]];
@@ -150,8 +156,13 @@
   // On Margaret's TV the Johnsons are "Margaret's family" (the phone names a care family after the resident).
   const famName = (fam) => (isCare() && fam.id === "johnsons" ? "Margaret’s family" : fam.name);
   const FAMILY_OF = (m) => (m && m.fam === "community" ? TV.community : famName(FAMILIES.find((f) => f.id === ((m && m.fam) || "johnsons")) || FAMILIES[0]));
-  const thumbOf = (m) => m.thumb || m.items[0].src;
-  const countLabel = (m) => (m.items[0].type === "video" ? "Video" : m.items.length === 1 ? "1 photo" : m.items.length + " photos");
+  const thumbOf = (m) => m.thumb || m.items[0].poster || m.items[0].src;
+  // "1 photo", "5 photos", "Video", "3 photos · 2 videos"
+  const countLabel = (m) => {
+    const v = m.items.filter((x) => x.type === "video").length, p = m.items.length - v;
+    if (!p) return v === 1 ? "Video" : v + " videos";
+    return (p === 1 ? "1 photo" : p + " photos") + (v ? " · " + (v === 1 ? "1 video" : v + " videos") : "");
+  };
 
   /* ================= Storage + design options ================= */
   const store = {
@@ -165,9 +176,6 @@
   if (concept === "D") concept = "C";
   if (!CONCEPTS[concept]) concept = "C";
   let launch = q.has("launch") ? q.get("launch") === "1" : store.get("launch", false); // launch = no AI yet: no People, no Events
-  // Viewer controls: 1 = bottom-left buttons · 2 = arrows on the screen edges (option 3, arrows beside a portrait photo, dropped 19 Nov)
-  let ctrlOpt = String(q.get("ctrls") || store.get("ctrls", "1"));
-  if (ctrlOpt !== "1" && ctrlOpt !== "2") ctrlOpt = ctrlOpt === "3" ? "2" : "1";
   TV = TVS[q.get("tv") === "care" || (!q.has("tv") && store.get("tv", "home") === "care") ? "care" : "home"];
   const visibleMem = (id) => MEM[id] && !MEM[id].hidden && (!launch || !MEM[id].ai);
   const memIds = (kind) => Object.keys(MEM).filter((id) => visibleMem(id) && (!kind || MEM[id].kind === kind));
@@ -401,7 +409,7 @@
   function heroFor(it) {
     if (it.t === "moment" && MOMENTS[it.id].fam === "community") {
       const m = MOMENTS[it.id];
-      return { bg: [m.items[0].src], portrait: m.items[0].o === "p", eyebrow: eyebrow(m.isNew ? NEWTAG("New") : "", "Care community"),
+      return { bg: [thumbOf(m)], portrait: m.items[0].o === "p", eyebrow: eyebrow(m.isNew ? NEWTAG("New") : "", "Care community"),
         who: '<img src="' + A("avatar-community.svg") + '" alt=""><span class="hero-title">' + TV.community + "</span>",
         meta: PEOPLE[m.by].name + DOT + countLabel(m) + DOT + m.date, quote: "“" + m.caption + "”", caption: true, dots: Math.min(5, m.items.length) };
     }
@@ -609,8 +617,8 @@
     const visible = Object.keys(MOMENTS).filter((id) => !MOMENTS[id].hidden);
     const care = isCare();
     // On a care TV the care home's posts mix into Recent by date, as in Figma 11-A.
-    const recent = (care ? ["m-tom-new", "c-concert", "m-bulk", "m-long-l", "c-scones", "m-long-p", "c-dog", "c-music", "m-tom-video", "m-cake", "m-may-video", "m-may", "m-ed-video", "m-autumn", "m-drawing", "m-dinner", "m-may-sofa", "m-newborn"]
-      : ["m-tom-new", "m-bulk", "m-long-l", "m-long-p", "m-tom-video", "m-cake", "m-may-video", "m-may", "m-ed-video", "m-autumn", "m-drawing", "m-dinner", "m-may-sofa", "m-newborn"]).filter((id) => visible.includes(id));
+    const recent = (care ? ["m-tom-new", "c-concert", "m-bulk", "m-vid-p", "m-long-l", "m-mix", "m-shapes", "c-scones", "m-long-p", "c-dog", "c-music", "m-tom-video", "m-cake", "m-may-video", "m-may", "m-ed-video", "m-autumn", "m-drawing", "m-dinner", "m-may-sofa", "m-newborn"]
+      : ["m-tom-new", "m-bulk", "m-vid-p", "m-long-l", "m-mix", "m-shapes", "m-long-p", "m-tom-video", "m-cake", "m-may-video", "m-may", "m-ed-video", "m-autumn", "m-drawing", "m-dinner", "m-may-sofa", "m-newborn"]).filter((id) => visible.includes(id));
     const older = ["m-boxing", "m-xmas-video", "m-xmas-day", "m-xmas-baking", "m-xmas-tree"];
     const mine = recent.concat(older);
     const byPerson = (p) => mine.filter((id) => MOMENTS[id].by === p).map(M);
@@ -710,23 +718,30 @@
     screen.mount(screen.arg);
   }
 
-  /* ================= Controls, option 2: arrows on the screen edges, OK pauses ================= */
-  // The arrows stand for the remote's Left and Right keys, so they sit where those keys point. No focus to move:
-  // Left/Right step, OK pauses (a big "Paused" sign shows in the middle of the photo), and the arrow you pressed lights up.
-  const edgeUi = (atStart, paused) =>
-    '<div class="edge-arrow left' + (atStart ? " is-off" : "") + '" data-edge="prev"><img src="' + A("icon-chev-left-39.svg") + '" alt="Previous"></div>' +
-    '<div class="edge-arrow right" data-edge="next"><img src="' + A("icon-chev-right-39.svg") + '" alt="Next"></div>' +
-    '<div class="pause-ind' + (paused ? " is-on" : "") + '" id="pauseInd"><i><img src="' + A("icon-pause.svg") + '" alt=""></i><span>Paused</span></div>';
-  function hitEdge(dir) {
-    const el = $(".edge-arrow." + (dir === "prev" ? "left" : "right"), stage); if (!el) return;
-    el.classList.remove("is-hit"); void el.offsetWidth; el.classList.add("is-hit");
-    clearTimeout(hitEdge.t); hitEdge.t = setTimeout(() => el.classList.remove("is-hit"), 450);
+  /* ================= Photo shapes ================= */
+  // Every photo and video is shown whole (never cropped by more than a sliver). Its real shape, measured from the file, picks the layout:
+  //   wide (16:9-ish)          → full screen
+  //   std  (4:3, 3:2)          → whole photo, full height, centred; blurred copy fills the sides; text over the bottom
+  //   tall (square → 9:16)     → framed on the right, sized to its shape; sender and caption on the left
+  //   pano (wider than 2.2:1)  → whole photo across the top; blurred copy fills the rest; text below
+  const RATIO = {}, measuring = {};
+  function measure(it) {
+    if (it.type === "video" || RATIO[it.src] || measuring[it.src]) return measuring[it.src] || Promise.resolve();
+    return (measuring[it.src] = new Promise((ok) => { const i = new Image(); i.onload = () => { RATIO[it.src] = i.naturalWidth / i.naturalHeight; ok(); }; i.onerror = ok; i.src = it.src; }));
   }
-  function showPaused(host, paused) {
-    const p = $("#pauseInd", stage); if (p) p.classList.toggle("is-on", paused);
-    if (!paused && host) { const r = document.createElement("div"); r.className = "big-ring"; r.innerHTML = '<img src="' + A("icon-play-77.svg") + '" alt="">'; host.appendChild(r); setTimeout(() => r.remove(), 1000); }
+  const ratioOf = (it) => (it.type === "video" ? (it.o === "p" ? 9 / 16 : 16 / 9) : RATIO[it.src] || (it.o === "p" ? 0.75 : 16 / 9));
+  const shapeOf = (r) => (r > 2.2 ? "pano" : r >= 1.6 ? "wide" : r >= 1.2 ? "std" : "tall");
+  setTimeout(() => { Object.values(MOMENTS).forEach((m) => m.items.forEach(measure)); Object.keys(PH).forEach((id) => measure({ src: phSrc(id) })); }, 300); // know every shape before it's needed
+  // For full-screen places without a text column (memory player, ambient): a wide photo fills the screen; any other shape
+  // sits whole in the middle, full height (or full width for a panorama), over a blurred copy of itself.
+  function wholePhotoHtml(src) {
+    const r = RATIO[src] || 16 / 9;
+    if (shapeOf(r) === "wide") return null;
+    const fw = Math.min(1920, 1080 * r), fh = fw / r;
+    return '<div class="pf-blur" style="background-image:url(' + src + ')"></div><div class="pf-dim"></div>' +
+      '<div class="pf-img" style="left:' + Math.round((1920 - fw) / 2) + "px;top:" + Math.round((1080 - fh) / 2) + "px;width:" + Math.round(fw) + "px;height:" + Math.round(fh) + "px;background-image:url(" + src + ')"></div>';
   }
-  const setCtlClass = (el, portrait) => { if (!el) return; el.classList.remove("ctl-1", "ctl-2"); el.classList.add("ctl-" + ctrlOpt); el.classList.toggle("is-p", !!portrait); };
+  function setWholePhoto(el, src) { const h = wholePhotoHtml(src); el.innerHTML = h || ""; el.style.backgroundImage = h ? "none" : "url(" + src + ")"; }
 
   /* ================= Moment viewer ================= */
   const V = { list: [], mi: 0, pi: 0, t: 0, paused: false, from: null };
@@ -742,7 +757,11 @@
       let last = performance.now();
       this.tick = setInterval(() => {
         const now = performance.now(), dt = Math.min(1, (now - last) / 1000); last = now;
-        if (!V.paused && !document.hidden) { const item = this.item(); V.t += dt / (item.type === "video" ? item.dur : this.photoSecs()); if (V.t >= 1) this.step(1, true); else this.progress(); }
+        if (V.paused) return;
+        const item = this.item();
+        if (item.type === "video") { const el = $("#vid", stage); if (el) { V.t = Math.min(1, el.currentTime / this.vidDur()); this.progress(); } return; }
+        if (document.hidden) return;
+        V.t += dt / this.photoSecs(); if (V.t >= 1) this.step(1, true); else this.progress();
       }, 100);
     },
     unmount() { clearInterval(this.tick); clearTimeout(this.quietT); },
@@ -752,33 +771,53 @@
     photoSecs() { const m = this.moment(); return Math.max(PHOTO_SECONDS, readSecs(m.caption) / m.items.length); },
     readMs() { return Math.max(4000, readSecs(this.moment().caption) * 1000); },
     item() { return this.moment().items[V.pi]; },
+    // Clip length from the file when the browser knows it, otherwise the length in the data
+    vidDur() { const el = $("#vid", stage), d = el && el.duration; return d && isFinite(d) ? d : this.item().dur; },
     paint() {
       const m = this.moment(), it = this.item(), who = PEOPLE[m.by];
       m.isNew = false;
       const n = m.items.length, vid = it.type === "video";
-      const count = vid ? "Video" + DOT + (V.mi + 1) + " of " + V.list.length : n > 1 ? (V.pi + 1) + " / " + n : (V.mi + 1) + " / " + V.list.length;
-      const meta = FAMILY_OF(m) + DOT + (it.date || m.date) + (vid ? DOT + "Video" : n > 1 ? DOT + "Photo " + (V.pi + 1) + " of " + n : "");
+      const count = n > 1 ? (V.pi + 1) + " / " + n : vid ? "Video" + DOT + (V.mi + 1) + " of " + V.list.length : (V.mi + 1) + " / " + V.list.length;
+      const meta = FAMILY_OF(m) + DOT + (it.date || m.date) + (n > 1 ? DOT + (vid ? "Video " : "Photo ") + (V.pi + 1) + " of " + n : vid ? DOT + "Video" : "");
+      const still = vid ? it.poster : it.src;
+      const media = (cls) => vid ? '<video class="' + cls + '" id="vid" src="' + it.src + '" poster="' + it.poster + '" muted playsinline autoplay preload="auto"></video>' : "";
+      const timeRow = '<div class="v-time"><span class="t-small" id="tcur">0:00</span><div class="track"><i id="bar"></i><em id="head"></em></div><span class="t-small muted-2" id="tdur">' + mmss(it.dur) + "</span></div>";
       const ctrls = '<div class="ctrls"><div class="ring" data-f data-act="prev"><img src="' + A("icon-chev-left-39.svg") + '" alt="Previous"></div>' +
         '<div class="ring" data-f data-act="pause" id="pp"><img src="' + A(V.paused ? "icon-play-39.svg" : "icon-pause.svg") + '" alt=""></div>' +
         '<div class="ring" data-f data-act="next"><img src="' + A("icon-chev-right-39.svg") + '" alt="Next"></div></div>';
       const from = '<div class="v-from"><img src="' + who.avatar + '" alt=""><div><div class="t-title">' + who.name + '</div><div class="meta t-body">' + meta + "</div></div></div>";
+      if (!vid && !RATIO[it.src]) measure(it).then(() => { if (current === "viewer" && this.item() === it && RATIO[it.src]) this.paint(); }); // first time only
+      const r = ratioOf(it), shape = shapeOf(r);
       let h;
-      if (it.o === "p") {
-        h = '<div class="v-backdrop" style="background-image:url(' + it.src + ')"></div><div class="v-dim-p"></div>' +
-          '<div class="v-pframe" style="background-image:url(' + it.src + ')"><div class="v-count">' + count + "</div></div>" +
+      if (shape === "tall") {
+        // Framed on the right, inside x 1000–1824 and y 56–1024, sized to the photo's own shape
+        const fw = Math.min(824, 968 * r), fh = fw / r, box = "left:" + Math.round(1000 + (824 - fw) / 2) + "px;top:" + Math.round(56 + (968 - fh) / 2) + "px;width:" + Math.round(fw) + "px;height:" + Math.round(fh) + "px;--cx:" + Math.round((1920 - fw) / 2) + "px;";
+        h = '<div class="v-backdrop" style="background-image:url(' + still + ')"></div><div class="v-dim-p"></div>' +
+          '<div class="v-pframe' + (vid ? " has-video" : "") + '" style="' + box + "background-image:url(" + still + ')">' + media("v-pvideo") + '<div class="v-count">' + count + "</div></div>" +
           '<div class="v-ptext">' + from + '<div class="v-caption t-body' + (m.caption.length > 260 ? " is-long" : "") + '">' + m.caption + "</div></div>" +
-          (ctrlOpt === "1" ? '<div class="v-pctrls">' + ctrls + "</div>" : "") + '<div class="v-progress v-p-progress"><i id="bar"></i></div>';
+          '<div class="v-pctrls">' + ctrls + "</div>" + (vid ? timeRow : '<div class="v-progress v-p-progress"><i id="bar"></i></div>');
       } else {
-        h = '<div class="v-photo" style="background-image:url(' + it.src + ')"></div>' + (vid ? '<div class="v-dim"></div>' : "") +
+        let pic;
+        if (shape === "wide") pic = vid ? media("v-photo v-video") : '<div class="v-photo" style="background-image:url(' + it.src + ')"></div>';
+        else { // std or pano: the whole photo, with its own blurred copy filling the rest of the screen
+          const fw = shape === "std" ? 1080 * r : 1920, fh = fw / r, top = shape === "std" ? 0 : Math.max(60, (760 - fh) / 2);
+          pic = '<div class="v-backdrop" style="background-image:url(' + still + ')"></div><div class="v-dim-p"></div>' +
+            '<div class="v-fit" style="left:' + Math.round((1920 - fw) / 2) + "px;top:" + Math.round(top) + "px;width:" + Math.round(fw) + "px;height:" + Math.round(fh) + "px;background-image:url(" + still + ')">' + media("v-fitvideo") + "</div>";
+        }
+        h = pic +
           '<div class="v-scrim-b"></div><div class="v-scrim-t"></div><div class="v-count">' + count + "</div>" +
-          '<div class="v-info"><div>' + from + '<div class="v-caption t-body' + (m.caption.length > 260 ? " is-long" : "") + '">' + m.caption + "</div></div></div>" + (ctrlOpt === "1" ? '<div class="v-pctrls">' + ctrls + "</div>" : "") +
-          (vid ? '<div class="v-time"><span class="t-small" id="tcur">0:00</span><div class="track"><i id="bar"></i><em id="head"></em></div><span class="t-small muted-2">' + mmss(it.dur) + "</span></div>"
-            : '<div class="v-progress"><i id="bar"></i></div>');
+          '<div class="v-info"><div>' + from + '<div class="v-caption t-body' + (m.caption.length > 260 ? " is-long" : "") + '">' + m.caption + "</div></div></div>" + '<div class="v-pctrls">' + ctrls + "</div>" +
+          (vid ? timeRow : '<div class="v-progress"><i id="bar"></i></div>');
       }
       const v = $("#viewer", stage);
-      if (ctrlOpt !== "1") h += edgeUi(V.mi === 0 && V.pi === 0, V.paused);
       v.innerHTML = h;
-      setCtlClass(v, it.o === "p");
+      v.dataset.shape = shape;
+      const el = $("#vid", v);
+      if (el) {
+        el.addEventListener("ended", () => { if ($("#vid", stage) === el) this.step(1, true); }); // the clip finished → next item
+        el.addEventListener("loadedmetadata", () => { const d = el.duration; if (d && isFinite(d)) { const t = $("#tdur", stage); if (t) t.textContent = mmss(d); } });
+        if (V.paused) el.pause(); else { const p = el.play(); if (p && p.catch) p.catch(() => {}); }
+      }
       focused = null;
       setFocus($(this.lastCtrl ? '[data-act="' + this.lastCtrl + '"]' : "#pp", v) || $("#pp", v));
       this.progress();
@@ -786,7 +825,7 @@
     progress() {
       const bar = $("#bar", stage); if (!bar) return;
       const m = this.moment(), it = this.item();
-      if (it.type === "video") { bar.style.width = V.t * 100 + "%"; $("#head", stage).style.left = V.t * 100 + "%"; $("#tcur", stage).textContent = mmss(V.t * it.dur); }
+      if (it.type === "video") { bar.style.width = V.t * 100 + "%"; $("#head", stage).style.left = V.t * 100 + "%"; $("#tcur", stage).textContent = mmss(V.t * this.vidDur()); }
       else bar.style.width = ((V.pi + V.t) / m.items.length) * 100 + "%";
     },
     step(d, auto) {
@@ -809,7 +848,7 @@
     togglePause() {
       V.paused = !V.paused;
       const pp = $("#pp img", stage); if (pp) pp.src = A(V.paused ? "icon-play-39.svg" : "icon-pause.svg");
-      if (ctrlOpt !== "1") { showPaused($("#viewer", stage), V.paused); this.wake(); return; }
+      const el = $("#vid", stage); if (el) { if (V.paused) el.pause(); else { const p = el.play(); if (p && p.catch) p.catch(() => {}); } }
       if (this.item().type === "video" && V.paused) {
         const r = document.createElement("div"); r.className = "big-ring"; r.innerHTML = '<img src="' + A("icon-play-77.svg") + '" alt="">';
         $("#viewer", stage).appendChild(r); setTimeout(() => r.remove(), 1000);
@@ -835,10 +874,10 @@
       if (k === "back") { this.exit(); return true; }
       if (k === "left" || k === "right") {
         const a = k === "left" ? "prev" : "next"; this.lastCtrl = a;
-        if (ctrlOpt === "1") press($('[data-act="' + a + '"]', stage)); else { this.act(a); hitEdge(a); }
+        press($('[data-act="' + a + '"]', stage));
         return true;
       }
-      if (k === "ok") { if (ctrlOpt !== "1") { this.togglePause(); return true; } if (quiet) { this.wake(); return true; } if (focused) press(focused); return true; }
+      if (k === "ok") { if (quiet) { this.wake(); return true; } if (focused) press(focused); return true; }
       if (k === "up" || k === "down") { this.wake(); return true; }
     },
   };
@@ -900,8 +939,7 @@
           '<div class="story-chip" id="storyChip"></div><div class="segs" id="segs"></div>' +
           (mode === "channel" ? '<div class="ch-strip" id="chStrip"></div>' : "") +
           '<div class="v-info"><div><div class="v-from">' + avatars + '<div><div class="t-title">' + (m ? m.title : chTitle(PL.id)) + '</div><div class="meta t-body" id="plMeta"></div></div></div>' +
-          '<div class="v-caption t-body" id="plCap"></div></div></div>' + (ctrlOpt === "1" ? '<div class="v-pctrls">' + ctrls + "</div>" : edgeUi(false, PL.paused)) + '<div class="v-progress"><i id="bar"></i></div>';
-        setCtlClass(p, false);
+          '<div class="v-caption t-body" id="plCap"></div></div></div>' + '<div class="v-pctrls">' + ctrls + "</div>" + '<div class="v-progress"><i id="bar"></i></div>';
         focused = null; setFocus($("#pp", p));
         this.show(true);
         this.wake();
@@ -911,8 +949,8 @@
         const photos = this.photos(), id = photos[PL.i], ph = PH[id];
         const wrap = $("#plPhotos", stage); if (!wrap) return;
         const d = document.createElement("div");
-        d.className = "pl-photo kb " + (PL.i % 2 ? "kb-b" : "kb-a") + (ph.o === "p" ? " is-portrait" : "") + (first ? "" : " fade-in");
-        d.style.backgroundImage = "url(" + phSrc(id) + ")";
+        d.className = "pl-photo kb " + (PL.i % 2 ? "kb-b" : "kb-a") + (first ? "" : " fade-in");
+        setWholePhoto(d, phSrc(id)); // never cropped: portraits and squares sit whole over a blurred copy
         wrap.appendChild(d);
         while (wrap.children.length > 2) wrap.firstChild.remove();
         const m = mode === "memory" ? MEM[PL.id] : null;
@@ -971,7 +1009,7 @@
         s.innerHTML = '<span class="prev">◀  ' + at(-1) + '</span><span class="cur">' + at(0) + '</span><span class="next">' + at(1) + "  ▶</span>";
         s.classList.add("is-on"); clearTimeout(this.stripT); this.stripT = setTimeout(() => s.classList.remove("is-on"), 3000);
       },
-      togglePause() { PL.paused = !PL.paused; const pp = $("#pp img", stage); if (pp) pp.src = A(PL.paused ? "icon-play-39.svg" : "icon-pause.svg"); $$(".pl-photo", stage).forEach((e) => (e.style.animationPlayState = PL.paused ? "paused" : "running")); if (ctrlOpt !== "1") showPaused($("#player", stage), PL.paused); this.wake(); },
+      togglePause() { PL.paused = !PL.paused; const pp = $("#pp img", stage); if (pp) pp.src = A(PL.paused ? "icon-play-39.svg" : "icon-pause.svg"); $$(".pl-photo", stage).forEach((e) => (e.style.animationPlayState = PL.paused ? "paused" : "running")); this.wake(); },
       wake() {
         const p = $("#player", stage); if (!p) return;
         p.classList.remove("is-quiet"); clearTimeout(this.quietT);
@@ -979,7 +1017,6 @@
       },
       exit() { go(PL.from.route); },
       act(a) {
-        if (mode === "channel" && (a === "prev" || a === "next")) return this.switchChannel(a === "prev" ? -1 : 1);
         if (a === "prev") this.step(-1); else if (a === "next") this.step(1); else if (a === "pause" && PL.phase === "play") this.togglePause();
       },
       key(k) {
@@ -989,11 +1026,11 @@
         const quiet = $("#player", stage).classList.contains("is-quiet");
         if (k === "left" || k === "right") {
           const a = k === "left" ? "prev" : "next";
-          if (mode === "channel") { this.switchChannel(k === "left" ? -1 : 1); hitEdge(a); return true; }
-          if (ctrlOpt === "1") press($('[data-act="' + a + '"]', stage)); else { this.act(a); hitEdge(a); }
+          if (mode === "channel") { this.switchChannel(k === "left" ? -1 : 1); return true; }
+          press($('[data-act="' + a + '"]', stage));
           return true;
         }
-        if (k === "ok") { if (quiet && ctrlOpt === "1") { this.wake(); return true; } this.togglePause(); return true; }
+        if (k === "ok") { if (quiet) { this.wake(); return true; } this.togglePause(); return true; }
         if (k === "up" || k === "down") { this.wake(); if (mode === "channel") this.strip(); return true; }
       },
     };
@@ -1011,9 +1048,9 @@
     mount() {
       this.slides = [];
       if (concept === "C") { // ambient becomes a memory channel
-        newestMems().forEach((id) => MEM[id].photos.forEach((p) => { if (PH[p].o !== "p") this.slides.push({ src: phSrc(p), title: MEM[id].label + DOT + MEM[id].title, cap: PH[p].date + (PH[p].place ? " — " + PH[p].place : "") }); }));
+        newestMems().forEach((id) => MEM[id].photos.forEach((p) => { this.slides.push({ src: phSrc(p), title: MEM[id].label + DOT + MEM[id].title, cap: PH[p].date + (PH[p].place ? " — " + PH[p].place : "") }); }));
       } else {
-        momentRows().recent.items.forEach(({ id }) => { const m = MOMENTS[id]; if (m.bulk) return; m.items.forEach((it) => { if (it.type === "photo" && it.o !== "p") this.slides.push({ src: it.src, title: PEOPLE[m.by].name + DOT + FAMILY_OF(m) + DOT + m.date, cap: m.caption }); }); });
+        momentRows().recent.items.forEach(({ id }) => { const m = MOMENTS[id]; if (m.bulk) return; m.items.forEach((it) => { if (it.type === "photo") this.slides.push({ src: it.src, title: PEOPLE[m.by].name + DOT + FAMILY_OF(m) + DOT + m.date, cap: m.caption }); }); });
       }
       this.i = 0; this.front = "ambA";
       this.show(true);
@@ -1026,7 +1063,7 @@
     show(first) {
       const s = this.slides[this.i];
       const back = first ? this.front : this.front === "ambA" ? "ambB" : "ambA";
-      $("#" + back, stage).style.backgroundImage = "url(" + s.src + ")";
+      setWholePhoto($("#" + back, stage), s.src);
       if (!first) { $("#" + back, stage).style.opacity = 1; $("#" + this.front, stage).style.opacity = 0; this.front = back; }
       $("#ambChip", stage).innerHTML = '<b class="sep">' + s.title + "</b><p>" + s.cap + "</p>";
       const n = Math.min(8, this.slides.length);
@@ -1181,9 +1218,6 @@
   stage.addEventListener("click", (e) => {
     resetIdle();
     if (current === "ambient") return screen.click();
-    const ed = e.target.closest("[data-edge]");
-    if (ed && screen && screen.act) { screen.act(ed.dataset.edge); hitEdge(ed.dataset.edge); return; }
-    if (ctrlOpt !== "1" && (current === "viewer" || current === "play" || current === "channel") && !e.target.closest("[data-f]")) { if (screen.act) screen.act("pause"); return; }
     const j = e.target.closest("[data-jump]");
     if (j && screen && screen.jump) return screen.jump(+j.dataset.jump);
     if (current === "home" && e.target.closest(".toast") && toastState.countdown) return playArrival();
@@ -1197,24 +1231,16 @@
     idleT = setTimeout(() => { if (current === "home" && !toastState.countdown && !document.hidden) go("ambient"); }, 20000);
   }
   document.addEventListener("mousemove", () => { if (current !== "ambient") resetIdle(); }, { passive: true });
+  // Browsers pause a video while the page is hidden; carry on when it's back (unless the viewer paused it on purpose).
+  document.addEventListener("visibilitychange", () => {
+    const el = $("#vid", stage);
+    if (!document.hidden && el && el.paused && current === "viewer" && !V.paused) { const p = el.play(); if (p && p.catch) p.catch(() => {}); }
+  });
   setInterval(() => $$("[data-clock]", stage).forEach((el) => (el.textContent = timeLabel(new Date()) + DOT + TV.name)), 10000);
 
   /* ================= Review panel ================= */
   const sel = $("#concept"), chk = $("#launch");
-  const syncUrl = () => history.replaceState(null, "", "?concept=" + concept + (launch ? "&launch=1" : "") + (isCare() ? "&tv=care" : "") + (ctrlOpt !== "1" ? "&ctrls=" + ctrlOpt : "") + location.hash); // a copied link opens the same options
-  const ctrlSel = $("#ctrlopt"), ctrlNote = $("#ctrlNote");
-  const ctrlDescribe = () => { if (ctrlNote) ctrlNote.textContent = {
-    1: "Previous, pause and next under the caption, bottom-left on every photo. Focus moves between them.",
-    2: "Big arrows on the left and right edges of the screen, the same on every photo. Left/Right step, OK pauses.",
-  }[ctrlOpt]; };
-  if (ctrlSel) {
-    ctrlSel.value = ctrlOpt; ctrlDescribe();
-    ctrlSel.addEventListener("change", () => {
-      ctrlOpt = ctrlSel.value; store.set("ctrls", ctrlOpt); syncUrl(); ctrlDescribe();
-      if (current === "viewer") { screen.paint(); screen.wake(); }
-      else if ((current === "play" || current === "channel") && PL.phase === "play") screen.build();
-    });
-  }
+  const syncUrl = () => history.replaceState(null, "", "?concept=" + concept + (launch ? "&launch=1" : "") + (isCare() ? "&tv=care" : "") + location.hash); // a copied link opens the same options
   const tvSel = $("#tvkind");
   if (tvSel) {
     tvSel.value = TV.kind;
