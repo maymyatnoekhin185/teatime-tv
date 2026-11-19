@@ -82,6 +82,11 @@ Sample photos, people and families are placeholders. The video clips in `assets/
 
 Figma file `Uk1zH52TS6WFucHkYVFKJY`, section "TV UI Final" (`13283:30526`), plus the onboarding flowchart (`13903:5026`).
 
-## Updating the live site
+## Branches and the live site
 
-The live site is published with GitHub Pages from the **`tv-design`** branch. Pushing to `tv-design` updates it within a minute or two.
+| Branch | Its job |
+|---|---|
+| **`main`** | The approved version: what the team and client see, here on GitHub and on the live site (GitHub Pages publishes from `main`) |
+| **`tv-design`** | The workspace: new designs and changes are made here first |
+
+When a version is ready to share, `tv-design` is merged into `main` ("publish"), and the live site updates within a minute or two. Work in progress on `tv-design` never shows on the live link.

@@ -24,6 +24,12 @@ When one of these changes here, change it in the mobile repo too (and the other 
 - Everything is drawn on a 1920 × 1080 stage (the Figma frame size) and scaled to fit the window. Use design px inside the stage.
 - Figma source: section `13283:30526` "TV UI Final".
 
+## Branches and publishing (set up 19 Nov)
+- **`tv-design`** is the workspace: make and commit all changes here.
+- **`main`** is the approved version the team and client see. GitHub Pages publishes the live site from `main`: https://maymyatnoekhin185.github.io/teatime-tv/
+- **Publish** only when May says so: fast-forward `main` to `tv-design` (`git switch main && git merge --ff-only tv-design && git push origin main`, then switch back to `tv-design`). Never commit work directly on `main`.
+- The repo is public: don't push anything May wants to keep private.
+
 ## TV design notes
 - Designed for a 10-foot view: large type, high contrast, remote/D-pad focus states, no tiny touch targets.
 - Keep a `UX.md` here with the scenarios and screen map, as in the mobile repo.
