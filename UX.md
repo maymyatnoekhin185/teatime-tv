@@ -37,7 +37,7 @@ Replaced on 19 Nov: Welcome ("Get started"), the TV-made pairing code, the 6-dig
 | `#home` | 5 / 5b / 5c-Cp / 7 Home | Immersive list (below). |
 | `#viewer` | 6 / 6p / 6v / 6f Moment viewer | Plays a moment and then the rest of its row (below). |
 | `#ambient` | 8 Ambient | After 20 s idle on Home. Slideshow with clock and caption. Any key or click wakes it back to Home, on the same card, without acting on that key. |
-| `#thistv` | 9 This TV | Families on this TV + Sign out. Reached by Up from the top row of Home onto the profile chip, then OK. |
+| `#thistv` | 9 This TV | Families on this TV + Sign out. Reached from the **profile chip** (top right: time · TV name · picture) on every screen that shows it: Home, Memories, the opened 100-photo moment and a family's screen. Click it, or Up from the top row onto it, then OK. On This TV itself the chip is just a picture (you're already there). Back returns to the screen you opened it from. |
 | `#family` | 9a A family opened | Members (admin has the crown). Back → This TV. |
 
 ## Home — immersive list
@@ -73,7 +73,7 @@ Switch with **This TV** in the review panel ("Margaret's TV, at a care home"; `&
 |---|---|---|
 | Who watches | Lisa, at home | Margaret, in Room 12 at Cheltenham Manor. Often frailer; staff are around |
 | Who helps set it up | Family on a visit (QR), or Lisa types the family's code | Family on a visit (QR), or **staff help type the family's code** (the code screen says so) |
-| Families on it | Any number (Johnsons, Nguyens, Wilsons) | **One or more** (a son's and a daughter's family: in the prototype Margaret's family and the Wilsons) **+ the care home** |
+| Families on it | Any number (Johnsons, Nguyens, Wilsons) | Her family (one in the prototype; the layout allows more) **+ the care home** |
 | What plays | Family moments and memories | The same, **plus the care home's posts** (activities team, nurses) |
 | Top-right chip | "Lisa's TV" | "Margaret's TV" with her initial |
 | Paywall | From the 4th upload | None (care families skip it, as on mobile) |
@@ -86,9 +86,9 @@ Toast after connecting: "Connected to Margaret's family · Cheltenham Manor's po
 **What changes on Margaret's TV**
 - **Recent from everyone** mixes the care home's posts in by date (Figma 11-A).
 - **From Cheltenham Manor** rail straight after Recent (or after the Play memory buttons in C): the care home's posts. Its hero says **Care community** (eyebrow) → **Cheltenham Manor** (title, care home badge) → "Activities team · 1 photo · 17 Nov 2026" → the post as a quote. Each card is captioned with who posted it (Activities team, Nurse Priya).
-- Family rails as usual, plus **From The Wilsons** (her daughter's family); no Nguyens. The Johnsons show as **Margaret's family** (the phone names care families after the resident).
+- Family rails as usual; no other families' rails. The Johnsons show as **Margaret's family** (the phone names care families after the resident).
 - Memories are made from the family's photos only, never the care home's posts (other residents may be in them).
-- **This TV**: "Margaret's TV · Room 12 · Lakeside wing · Cheltenham Manor"; sections **stacked**, never side by side, because a resident can have several families: **Families on this TV** (Margaret's family, The Wilsons) → **Care community** (Cheltenham Manor: "Activities team and nurses post here" / "Managed by the care home", text wraps inside the card) → **Manage**. Down slides the page up so nothing below the edge is out of reach (all list screens do this). OK on it says "Cheltenham Manor looks after this · Ask the staff if something needs changing". Sign out as usual.
+- **This TV**: "Margaret's TV · Room 12 · Lakeside wing · Cheltenham Manor"; sections **stacked**, never side by side, because a resident can have several families: **Families on this TV** (Margaret's family) → **Care community** (Cheltenham Manor: "Activities team and nurses post here" / "Managed by the care home", text wraps inside the card) → **Manage**. Down slides the page up so nothing below the edge is out of reach (all list screens do this). OK on it says "Cheltenham Manor looks after this · Ask the staff if something needs changing". Sign out as usual.
 - Ambient, viewer, new-moment toast: unchanged; the care home's posts take part like any moment.
 - Not confirmed yet (E7, no resident match): the TV plays the family's moments only. The care home's rail appears once staff confirm Margaret. The TV never shows "waiting" or admin messages to the resident.
 

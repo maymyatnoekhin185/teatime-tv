@@ -36,8 +36,8 @@
   };
   let TV = TVS.home;
   const isCare = () => TV.kind === "care";
-  // Margaret's families: her son's (the Johnsons, shown as "Margaret's family") and her daughter's (the Wilsons).
-  const CARE_FAMILIES = () => FAMILIES.filter((f) => f.id === "johnsons" || f.id === "wilsons");
+  // Margaret's family on her TV (the Johnsons, shown as "Margaret's family"). The layout stays stacked, so more families can be added.
+  const CARE_FAMILIES = () => FAMILIES.filter((f) => f.id === "johnsons");
 
   // The family's photo library: when each was taken (photo date), where, and who is in it (named on the phones).
   const PH = {
@@ -460,7 +460,7 @@
         });
         if (st.row >= this.rows.length) st.row = 0;
         return '<div class="scr home rails"><div class="hero-layer" id="heroA"></div><div class="hero-layer" id="heroB" style="opacity:0"></div>' +
-          '<div class="fade-left"></div><div class="fade-bottom"></div><div class="fade-top"></div>' + topbar(true, !!cfg.chip) +
+          '<div class="fade-left"></div><div class="fade-bottom"></div><div class="fade-top"></div>' + topbar(true, true) +
           (cfg.crumb ? '<div class="crumb">' + cfg.crumb + "</div>" : "") +
           '<div class="home-hero' + (hasBtns ? " with-btns" : "") + '"><div class="hero-copy" id="heroCopy"></div><div class="dots" id="heroDots"></div></div>' + btnHtml +
           '<div class="rows" id="rows" style="top:' + this.base + 'px">' + rowsHtml + "</div>" +
@@ -478,7 +478,7 @@
           st.focusId = null;
         }
         const el = this.el(st.row, st.cols[st.row] || 0) || this.el(0, 0);
-        setFocus(st.onChip && cfg.chip ? $("#chip", stage) : el);
+        setFocus(st.onChip ? $("#chip", stage) : el);
         if (st.onChip) this.hero(this.item(st.row, st.cols[st.row] || 0));
         this.layout(true);
       },
@@ -571,7 +571,7 @@
         }
         const r = st.row, c = st.cols[r] || 0;
         if (k === "left" || k === "right") { const el = this.el(r, c + (k === "left" ? -1 : 1)); if (el) setFocus(el); return true; }
-        if (k === "up") { if (r === 0) { if (cfg.chip) { setFocus($("#chip", stage)); this.layout(); } } else setFocus(this.el(r - 1, Math.min(st.cols[r - 1] || 0, this.rows[r - 1].items.length - 1))); return true; }
+        if (k === "up") { if (r === 0) { setFocus($("#chip", stage)); this.layout(); } else setFocus(this.el(r - 1, Math.min(st.cols[r - 1] || 0, this.rows[r - 1].items.length - 1))); return true; }
         if (k === "down") { if (r < this.rows.length - 1) setFocus(this.el(r + 1, st.cols[r + 1] || 0)); return true; }
       },
     };
@@ -621,14 +621,12 @@
       recent: { title: "Recent from everyone", items: recent.map(M) },
       // Care TV: the care home's own rail, straight after Recent (Figma 11-A "From Cheltenham Manor · Community").
       community: care ? { title: "From " + TV.community, items: fam("community"), hint: "posts from the care home" } : null,
-      // After the family member rails: videos, last Christmas, then the other families on this TV (Margaret: her daughter’s family, the Wilsons).
+      // After the family member rails: videos, last Christmas, then the other families on this TV (home TV only; Margaret has one family).
       members: [["sarah", "Sarah’s moments"], ["ed", "Ed’s moments"], ["may", "May’s moments"], ["tom", "Tom’s moments"]].map(([p, t]) => ({ title: t, items: byPerson(p) }))
         .concat([
           { title: "Videos", items: mine.filter((id) => isVid(id) && isFam(id)).map(M) },
           { title: "Last Christmas", items: older.map(M), hint: "December 2025" },
-        ].concat(care ? [
-          { title: "From The Wilsons", items: fam("wilsons"), hint: "also on this TV" },
-        ] : [
+        ].concat(care ? [] : [
           { title: "From The Nguyens", items: fam("nguyens"), hint: "also on this TV" },
           { title: "From The Wilsons", items: fam("wilsons"), hint: "also on this TV" },
         ])),
@@ -1065,7 +1063,7 @@
     },
     key(k) {
       if ($(".dialog-back", stage)) { if (k === "back") { closeDialog(); return true; } return; }
-      if (k === "back") { this.lastFam = null; go("home"); return true; }
+      if (k === "back") { this.lastFam = null; go(this.backTo || "home"); return true; } // back to the screen whose chip opened it
     },
   };
   function confirmSignOut() {
@@ -1082,18 +1080,19 @@
   S.family = {
     html(arg) {
       const f = FAMILIES.find((x) => x.id === arg) || FAMILIES[0];
-      return '<div class="scr">' + glows + topbar(true, false) + '<div class="page" style="display:flex;flex-direction:column;gap:56px">' +
+      return '<div class="scr">' + glows + topbar(true, true) + '<div class="page" style="display:flex;flex-direction:column;gap:56px">' +
         '<div><div class="t-title">' + famName(f) + '</div><div class="t-body sep" style="color:rgba(255,255,255,.78);margin-top:12px">On ' + TV.name + " since " + f.since + DOT + f.members.length + " members" + DOT + f.moments + " moments</div></div>" +
         '<div><p class="section-label" style="margin-bottom:24px">Members</p><div class="people">' + f.members.map((m, i) =>
           '<div class="person" data-f' + (i === 0 ? ' id="first"' : "") + '><div class="av"><img src="' + PEOPLE[m[0]].avatar + '" alt="">' +
           (m[2] ? '<span class="crown" title="Admin"><img src="' + A("icon-crown.svg") + '" alt="Admin"></span>' : "") + "</div><div><b>" + PEOPLE[m[0]].name + "</b><span>" + m[1] + " moments</span></div></div>").join("") +
         "</div></div></div></div>";
     },
+    act(a) { if (a === "thistv") go("thistv"); },
     key(k) { if (k === "back") { go("thistv"); return true; } },
   };
 
   /* ================= Router ================= */
-  let current = null;
+  let current = null, currentRoute = "";
   let pendingToast = null;
   function connect(msg) {
     paired = true; store.set("paired", true);
@@ -1113,7 +1112,9 @@
     if (!S[name]) name = "splash";
     if (screen && screen.unmount) screen.unmount();
     clearToast(); toastState.countdown = false;
-    current = name; screen = S[name];
+    // Remember where This TV was opened from (its own family screens don't count), so Back goes there.
+    if (name === "thistv" && current && current !== "thistv" && current !== "family") S.thistv.backTo = currentRoute;
+    current = name; screen = S[name]; currentRoute = location.hash.replace(/^#/, "");
     stage.innerHTML = screen.html(arg);
     focused = null;
     if (screen.mount) screen.mount(arg);
